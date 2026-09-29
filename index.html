@@ -1,1015 +1,1003 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Peta Komplek Memori Interaktif</title>
-  
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berry Bitty City - Interactive Map</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Cute Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            pastel: {
-              pink: '#FFB7B2',
-              pinkLight: '#FFF0F3',
-              yellow: '#FFEDAA',
-              green: '#C7CEEA',
-              mint: '#E2F0CB',
-              mintDark: '#93C572',
-              blue: '#B5EAD7',
-              purple: '#E0BBE4',
-              brown: '#8D6E63',
-              cream: '#FFF9E6',
-              border: '#E8D5C4'
-            }
-          },
-          fontFamily: {
-            fredoka: ['Fredoka', 'sans-serif'],
-            quicksand: ['Quicksand', 'sans-serif']
-          },
-          boxShadow: {
-            'cute': '0 8px 0px 0px rgba(220, 190, 180, 0.4), 0 12px 20px rgba(0,0,0,0.08)',
-            'cute-sm': '0 4px 0px 0px rgba(220, 190, 180, 0.4)',
-            'cute-hover': '0 10px 0px 0px rgba(220, 190, 180, 0.5), 0 16px 25px rgba(0,0,0,0.12)',
-            'inner-soft': 'inner 0 4px 8px rgba(0,0,0,0.05)'
-          }
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #fdf2f8;
+            overflow: hidden;
+            user-select: none;
+            touch-action: none;
         }
-      }
-    }
-  </script>
 
-  <style>
-    body {
-      font-family: 'Quicksand', sans-serif;
-      background-color: #FBF7F0;
-      overflow: hidden;
-      user-select: none;
-    }
+        .font-fredoka { font-family: 'Fredoka', cursive; }
 
-    h1, h2, h3, h4, button, .font-heading {
-      font-family: 'Fredoka', sans-serif;
-    }
+        /* Glassmorphism styling */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 3px solid #fbcfe8;
+            box-shadow: 0 12px 28px -5px rgba(244, 63, 94, 0.22), 0 8px 10px -6px rgba(244, 63, 94, 0.1);
+        }
 
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #FFF5EC;
-      border-radius: 10px;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #FFB7B2;
-      border-radius: 10px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #FF9AA2;
-    }
+        .glass-button {
+            background: linear-gradient(135deg, #ffffff 0%, #fff1f2 100%);
+            border: 2px solid #f43f5e;
+            box-shadow: 0 4px 0 #fda4af;
+            transition: all 0.15s ease;
+        }
+        .glass-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #fda4af;
+            background: #ffffff;
+        }
+        .glass-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #fda4af;
+        }
 
-    /* Map Drag Cursor */
-    .map-viewport {
-      cursor: grab;
-    }
-    .map-viewport:active {
-      cursor: grabbing;
-    }
+        /* SVG Map Interactivity */
+        .house-group {
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease;
+            transform-box: fill-box;
+            transform-origin: center bottom;
+        }
+        .house-group:hover {
+            transform: scale(1.1) translateY(-8px);
+            filter: drop-shadow(0 12px 16px rgba(244, 63, 94, 0.35));
+        }
 
-    /* Floating Animation for Clouds & Elements */
-    @keyframes floatSlow {
-      0%, 100% { transform: translateY(0px) rotate(0deg); }
-      50% { transform: translateY(-12px) rotate(1deg); }
-    }
-    @keyframes swayTree {
-      0%, 100% { transform: rotate(-2deg); }
-      50% { transform: rotate(3deg); }
-    }
-    @keyframes pulsePin {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.12); }
-    }
-    @keyframes bounceSubtle {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-6px); }
-    }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #ffe4e6; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #f43f5e; border-radius: 10px; }
 
-    .animate-float {
-      animation: floatSlow 6s ease-in-out infinite;
-    }
-    .animate-sway {
-      transform-origin: bottom center;
-      animation: swayTree 4s ease-in-out infinite;
-    }
-    .animate-pulse-pin {
-      animation: pulsePin 2s ease-in-out infinite;
-    }
-    .animate-bounce-subtle {
-      animation: bounceSubtle 2.5s ease-in-out infinite;
-    }
-
-    /* Canvas Map Overlay styling */
-    #mapCanvas {
-      touch-action: none;
-    }
-
-    /* Custom CSS Glassmorphism */
-    .glass-card {
-      background: rgba(255, 255, 255, 0.92);
-      backdrop-filter: blur(8px);
-      border: 3px solid #FFF0F3;
-    }
-
-    /* Polaroids Styling */
-    .polaroid-frame {
-      background: white;
-      padding: 12px 12px 28px 12px;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.08), 0 2px 5px rgba(0,0,0,0.05);
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    .polaroid-frame:hover {
-      transform: scale(1.03) rotate(1deg);
-    }
-
-    /* Placement Pin Marker styling */
-    .placing-mode {
-      cursor: crosshair !important;
-    }
-
-    /* Tooltip arrow */
-    .tooltip-arrow::after {
-      content: '';
-      position: absolute;
-      bottom: -8px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-width: 8px 8px 0;
-      border-style: solid;
-      border-color: #ffffff transparent;
-      display: block;
-      width: 0;
-    }
-  </style>
+        /* Floating particles overlay */
+        #particle-canvas {
+            pointer-events: none;
+        }
+    </style>
 </head>
-<body class="h-screen w-screen overflow-hidden flex flex-col relative text-slate-700">
-
-  <header class="absolute top-4 left-4 right-4 z-20 flex flex-wrap justify-between items-center gap-3 pointer-events-none">
-    <!-- Title Badge -->
-    <div class="pointer-events-auto bg-white/95 backdrop-blur-md px-5 py-3 rounded-3xl border-4 border-pastel-pinkLight shadow-cute flex items-center gap-3">
-      <div class="w-10 h-10 rounded-2xl bg-pastel-pink flex items-center justify-center text-white text-xl animate-bounce-subtle">
-        🏡
-      </div>
-      <div>
-        <h1 class="text-xl font-bold text-slate-800 tracking-wide flex items-center gap-2">
-          Komplek Memori <span class="text-xs px-2 py-0.5 bg-pastel-yellow text-amber-800 rounded-full font-bold">Cute Edition</span>
-        </h1>
-        <p class="text-xs text-slate-500 font-medium">Jelajahi kenangan manis di setiap sudut rumah!</p>
-      </div>
-    </div>
-
-    <!-- Search & Filter Controls -->
-    <div class="pointer-events-auto flex items-center gap-2 bg-white/95 backdrop-blur-md p-2 rounded-3xl border-4 border-pastel-pinkLight shadow-cute">
-      <div class="relative">
-        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-        <input type="text" id="searchInput" placeholder="Cari rumah atau tempat..." 
-          class="pl-9 pr-3 py-1.5 bg-pastel-pinkLight/50 text-slate-700 text-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-pastel-pink w-40 sm:w-56 font-medium placeholder:text-slate-400">
-      </div>
-
-      <div class="h-6 w-0.5 bg-slate-200"></div>
-
-      <!-- Filter Buttons -->
-      <div class="flex gap-1" id="filterContainer">
-        <button onclick="setFilter('all')" data-filter="all" class="filter-btn active px-3 py-1.5 rounded-2xl text-xs font-bold transition-all bg-pastel-pink text-white shadow-cute-sm">Semua</button>
-        <button onclick="setFilter('rumah')" data-filter="rumah" class="filter-btn px-3 py-1.5 rounded-2xl text-xs font-bold transition-all bg-pastel-pinkLight text-slate-600 hover:bg-pastel-pink/20">🏠 Rumah</button>
-        <button onclick="setFilter('spot')" data-filter="spot" class="filter-btn px-3 py-1.5 rounded-2xl text-xs font-bold transition-all bg-pastel-pinkLight text-slate-600 hover:bg-pastel-pink/20">🌸 Spot</button>
-        <button onclick="setFilter('cafe')" data-filter="cafe" class="filter-btn px-3 py-1.5 rounded-2xl text-xs font-bold transition-all bg-pastel-pinkLight text-slate-600 hover:bg-pastel-pink/20">☕ Cafe</button>
-      </div>
-    </div>
-
-    <!-- Actions & Audio Controls -->
-    <div class="pointer-events-auto flex items-center gap-2">
-      <!-- Add House Button -->
-      <button id="addHouseBtn" onclick="toggleAddHouseMode()" class="bg-pastel-mintDark hover:bg-emerald-600 text-white font-bold px-4 py-2.5 rounded-3xl border-3 border-emerald-300 shadow-cute flex items-center gap-2 transition-all hover:scale-105 active:scale-95 text-sm">
-        <i data-lucide="plus-circle" class="w-5 h-5"></i>
-        <span>Tambah Rumah</span>
-      </button>
-
-      <!-- Audio BGM Button -->
-      <button id="bgmToggle" onclick="toggleAudio()" class="w-11 h-11 bg-white hover:bg-pastel-pinkLight rounded-2xl border-3 border-pastel-pinkLight shadow-cute flex items-center gap-2 justify-center text-slate-700 transition-all hover:scale-105 active:scale-95" title="Musik Latar">
-        <i data-lucide="music" class="w-5 h-5 text-pastel-pink"></i>
-      </button>
-    </div>
-  </header>
-
-  <div id="placementBanner" class="hidden absolute top-24 left-1/2 -translate-x-1/2 z-30 bg-amber-400 text-slate-900 font-bold px-6 py-3 rounded-full border-4 border-white shadow-lg flex items-center gap-3 animate-bounce">
-    <span class="text-xl">📍</span>
-    <span>Klik di area manapun pada peta komplek untuk menaruh rumah baru!</span>
-    <button onclick="cancelAddHouseMode()" class="ml-2 bg-slate-800 text-white px-3 py-1 rounded-full text-xs hover:bg-slate-700">Batal</button>
-  </div>
-
-  <div class="absolute bottom-6 right-6 z-20 flex flex-col gap-2">
-    <button onclick="zoomMap(0.15)" class="w-11 h-11 bg-white hover:bg-pastel-pinkLight rounded-2xl border-3 border-pastel-pinkLight shadow-cute flex items-center justify-center text-slate-700 font-bold text-xl transition-all hover:scale-105 active:scale-95" title="Zoom In">+</button>
-    <button onclick="zoomMap(-0.15)" class="w-11 h-11 bg-white hover:bg-pastel-pinkLight rounded-2xl border-3 border-pastel-pinkLight shadow-cute flex items-center justify-center text-slate-700 font-bold text-xl transition-all hover:scale-105 active:scale-95" title="Zoom Out">-</button>
-    <button onclick="resetMapTransform()" class="w-11 h-11 bg-white hover:bg-pastel-pinkLight rounded-2xl border-3 border-pastel-pinkLight shadow-cute flex items-center justify-center text-slate-700 transition-all hover:scale-105 active:scale-95" title="Reset Pandangan">
-      <i data-lucide="rotate-ccw" class="w-5 h-5 text-slate-600"></i>
-    </button>
-  </div>
-
-  <!-- Map Instructions Bottom Left Badge -->
-  <div class="absolute bottom-6 left-6 z-20 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-2xl border-2 border-pastel-pinkLight shadow-sm text-xs font-semibold text-slate-600 flex items-center gap-2 pointer-events-none">
-    <i data-lucide="hand" class="w-4 h-4 text-pastel-pink"></i>
-    <span>Klik & Drag untuk geser peta • Scroll untuk Zoom In/Out</span>
-  </div>
-
-  <main id="mapViewport" class="map-viewport w-full h-full relative overflow-hidden bg-emerald-100/60">
-    <!-- Map World Container that transforms (Scale & Translate) -->
-    <div id="mapWorld" class="absolute left-0 top-0 origin-top-left transition-transform duration-75">
-      <!-- Interactive SVG / HTML Canvas World -->
-      <canvas id="mapCanvas" class="block"></canvas>
-
-      <!-- Houses Pins Container (Positioned absolutely on top of map canvas) -->
-      <div id="pinsContainer" class="absolute inset-0 pointer-events-none">
-        <!-- Pins will be dynamically generated by JS -->
-      </div>
-    </div>
-  </main>
-
-  <div id="memoryModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
-    <div id="modalCard" class="bg-white rounded-3xl border-4 border-pastel-pinkLight shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col transform scale-90 transition-all duration-300 relative">
-      
-      <!-- Modal Header -->
-      <div class="bg-pastel-pinkLight px-6 py-4 flex items-center justify-between border-b-2 border-pastel-pink/20">
-        <div class="flex items-center gap-3">
-          <span id="modalIcon" class="text-3xl bg-white p-2 rounded-2xl shadow-sm">🏠</span>
-          <div>
-            <div class="flex items-center gap-2">
-              <h2 id="modalTitle" class="text-2xl font-bold text-slate-800">Nama Rumah</h2>
-              <span id="modalTag" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-pastel-pink text-white">Rumah</span>
-            </div>
-            <p id="modalSub" class="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
-              <i data-lucide="map-pin" class="w-3.5 h-3.5 text-pastel-pink"></i>
-              <span id="modalCoords">Sektor A-1</span>
-            </p>
-          </div>
-        </div>
-
-        <button onclick="closeMemoryModal()" class="w-10 h-10 bg-white hover:bg-rose-100 rounded-2xl text-slate-500 hover:text-rose-500 flex items-center justify-center transition-all shadow-sm">
-          <i data-lucide="x" class="w-6 h-6"></i>
-        </button>
-      </div>
-
-      <!-- Modal Body (Scrollable) -->
-      <div class="p-6 overflow-y-auto space-y-6 flex-1 bg-gradient-to-b from-white to-pastel-pinkLight/20">
-        
-        <!-- Description / Memo Card -->
-        <div class="bg-pastel-cream border-2 border-amber-200/80 rounded-2xl p-4 shadow-sm relative">
-          <span class="absolute -top-3 left-4 bg-amber-300 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full">
-            📝 Catatan Kenangan
-          </span>
-          <p id="modalDescription" class="text-slate-700 text-sm leading-relaxed mt-1 font-medium">
-            Deskripsi kenangan indah di rumah ini...
-          </p>
-        </div>
-
-        <!-- Photo Gallery (Polaroid Slider Style) -->
-        <div>
-          <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
-            <i data-lucide="image" class="w-4 h-4 text-pastel-pink"></i>
-            <span>Galeri Foto Kenangan</span>
-          </h3>
-
-          <div id="modalGallery" class="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x">
-            <!-- Dynamic Polaroid Photos inserted here -->
-          </div>
-        </div>
-
-        <!-- Video Player Section -->
-        <div id="modalVideoSection" class="hidden">
-          <h3 class="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-            <i data-lucide="video" class="w-4 h-4 text-pastel-pink"></i>
-            <span>Video Kenangan Populer</span>
-          </h3>
-          <div class="rounded-2xl overflow-hidden border-3 border-pastel-pinkLight shadow-sm bg-black relative">
-            <video id="modalVideo" controls class="w-full max-h-64 object-contain">
-              <source id="modalVideoSource" src="" type="video/mp4">
-              Browser kamu tidak mendukung pemutaran video.
-            </video>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="px-6 py-3.5 bg-white border-t-2 border-slate-100 flex items-center justify-between">
-        <button id="likeBtn" onclick="toggleLikeCurrentHouse()" class="flex items-center gap-2 px-4 py-2 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-500 font-bold transition-all active:scale-95 border border-rose-200">
-          <i data-lucide="heart" class="w-5 h-5 fill-rose-500"></i>
-          <span id="modalLikesCount">0 Sukai</span>
-        </button>
-
-        <div class="flex items-center gap-2">
-          <button onclick="deleteCurrentHouse()" id="deleteHouseBtn" class="text-slate-400 hover:text-rose-500 text-xs font-bold px-3 py-2 rounded-xl transition-all">
-            Hapus Tempat
-          </button>
-          <button onclick="closeMemoryModal()" class="px-5 py-2 rounded-2xl bg-pastel-pink hover:bg-rose-400 text-white font-bold shadow-cute-sm transition-all active:scale-95 text-sm">
-            Tutup
-          </button>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <div id="addHouseModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
-    <div class="bg-white rounded-3xl border-4 border-pastel-pinkLight shadow-2xl w-full max-w-lg overflow-hidden p-6 space-y-4 relative">
-      
-      <div class="flex justify-between items-center border-b pb-3">
-        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-          <span>✨</span> Tambah Rumah / Spot Kenangan Baru
-        </h2>
-        <button onclick="closeAddHouseModal()" class="text-slate-400 hover:text-slate-600">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <form id="addHouseForm" onsubmit="saveNewHouse(event)" class="space-y-3">
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">Nama Tempat / Rumah *</label>
-          <input type="text" id="newTitle" required placeholder="misal: Rumah Syifa & Syakira" 
-            class="w-full px-3 py-2 border-2 border-slate-200 rounded-xl text-sm focus:border-pastel-pink focus:outline-none">
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Kategori *</label>
-            <select id="newCategory" class="w-full px-3 py-2 border-2 border-slate-200 rounded-xl text-sm focus:border-pastel-pink focus:outline-none">
-              <option value="rumah">🏠 Rumah</option>
-              <option value="spot">🌸 Spot Kumpul</option>
-              <option value="cafe">☕ Cafe / Kedai</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Ikon Lucu *</label>
-            <select id="newIcon" class="w-full px-3 py-2 border-2 border-slate-200 rounded-xl text-sm focus:border-pastel-pink focus:outline-none">
-              <option value="🏠">🏠 Rumah Merah</option>
-              <option value="🏡">🏡 Rumah Taman</option>
-              <option value="💒">💒 Istana Pink</option>
-              <option value="☕">☕ Cafe Unyu</option>
-              <option value="🌸">🌸 Taman Bunga</option>
-              <option value="🐱">🐱 Rumah Kucing</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">Deskripsi / Kenangan *</label>
-          <textarea id="newDescription" rows="2" required placeholder="Tulis cerita manis atau kenangan di tempat ini..."
-            class="w-full px-3 py-2 border-2 border-slate-200 rounded-xl text-sm focus:border-pastel-pink focus:outline-none"></textarea>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">URL Foto (Bisa dipisah koma untuk banyak foto)</label>
-          <input type="text" id="newImageUrls" placeholder="https://images.unsplash.com/photo-1512917774080-9991f1c4c750" 
-            class="w-full px-3 py-2 border-2 border-slate-200 rounded-xl text-sm focus:border-pastel-pink focus:outline-none">
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">URL Video (Opsional .mp4)</label>
-          <input type="text" id="newVideoUrl" placeholder="https://www.w3schools.com/html/mov_bbb.mp4" 
-            class="w-full px-3 py-2 border-2 border-slate-200 rounded-xl text-sm focus:border-pastel-pink focus:outline-none">
-        </div>
-
-        <div class="pt-2 flex justify-end gap-2">
-          <button type="button" onclick="closeAddHouseModal()" class="px-4 py-2 rounded-xl text-slate-500 font-bold text-xs hover:bg-slate-100">Batal</button>
-          <button type="submit" class="px-5 py-2 bg-pastel-pink hover:bg-rose-400 text-white font-bold rounded-xl shadow-cute-sm text-xs transition-all">Simpan Lokasi</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Audio Synthesizer BGM Audio Player Generator using Web Audio API -->
-  <script>
-    let audioCtx = null;
-    let isBGMPlaying = false;
-    let bgmInterval = null;
-
-    function toggleAudio() {
-      const btn = document.getElementById('bgmToggle');
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-
-      if (isBGMPlaying) {
-        isBGMPlaying = false;
-        clearInterval(bgmInterval);
-        btn.classList.remove('bg-pastel-pink', 'text-white');
-        btn.classList.add('bg-white', 'text-slate-700');
-      } else {
-        isBGMPlaying = true;
-        btn.classList.add('bg-pastel-pink', 'text-white');
-        btn.classList.remove('bg-white', 'text-slate-700');
-        playCuteMelody();
-      }
-    }
-
-    function playNote(freq, duration = 0.3, type = 'sine') {
-      if (!audioCtx || !isBGMPlaying) return;
-      try {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        
-        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-
-        osc.start();
-        osc.stop(audioCtx.currentTime + duration);
-      } catch (e) {}
-    }
-
-    function playCuteMelody() {
-      const notes = [261.63, 329.63, 392.00, 523.25, 440.00, 349.23, 392.00, 329.63]; // Cute C Major Scale
-      let step = 0;
-      bgmInterval = setInterval(() => {
-        if (!isBGMPlaying) return;
-        playNote(notes[step % notes.length], 0.4, 'triangle');
-        step++;
-      }, 500);
-    }
-  </script>
-
-  <script>
-    // Map Dimensions
-    const MAP_WIDTH = 2200;
-    const MAP_HEIGHT = 1600;
-
-    // Default Initial Neighborhood Data
-    const DEFAULT_HOUSES = [
-      {
-        id: 'rumah-1',
-        title: 'Rumah Syifa (Kenangan Utama)',
-        category: 'rumah',
-        icon: '💒',
-        x: 650,
-        y: 600,
-        description: 'Rumah tempat kumpul paling sering! Banyak kenangan masak bareng, nonton film sampai larut malam, dan ngobrol tak henti-henti.',
-        images: [
-          'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
-          'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80'
-        ],
-        video: 'https://www.w3schools.com/html/mov_bbb.mp4',
-        likes: 12
-      },
-      {
-        id: 'rumah-2',
-        title: 'Kedai Kopi Unyu',
-        category: 'cafe',
-        icon: '☕',
-        x: 1050,
-        y: 520,
-        description: 'Tempat langganan beli boba dan es kopi susu gula aren pas sore-sore. Tempat cerita gosip terupdate!',
-        images: [
-          'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=800&q=80'
-        ],
-        likes: 8
-      },
-      {
-        id: 'spot-1',
-        title: 'Taman Bunga Senja',
-        category: 'spot',
-        icon: '🌸',
-        x: 1350,
-        y: 850,
-        description: 'Spot paling bagus buat foto polaroid dan piknik sore. Bunganya selalu bermekaran indah.',
-        images: [
-          'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb5e?auto=format&fit=crop&w=800&q=80'
-        ],
-        likes: 15
-      },
-      {
-        id: 'rumah-3',
-        title: 'Rumah Kucing Meow',
-        category: 'rumah',
-        icon: '🐱',
-        x: 450,
-        y: 1000,
-        description: 'Rumah dengan banyak kucing lucu yang ramah. Sering disinggahi anak-anak komplek.',
-        images: [
-          'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=800&q=80'
-        ],
-        likes: 20
-      },
-      {
-        id: 'rumah-4',
-        title: 'Rumah Pohon Rahasia',
-        category: 'spot',
-        icon: '🏡',
-        x: 1550,
-        y: 400,
-        description: 'Tempat berteduh pas lagi hujan sambil dengarin lagu-lagu santai.',
-        images: [
-          'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80'
-        ],
-        likes: 5
-      },
-      {
-        id: 'rumah-5',
-        title: 'Rumah Taman Melati',
-        category: 'rumah',
-        icon: '🏠',
-        x: 850,
-        y: 500,
-        description: 'Rumah nyaman dengan taman kecil untuk berkumpul, ngobrol, dan menyimpan kenangan bersama.',
-        images: [
-          'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80'
-        ],
-        likes: 6
-      },
-      {
-        id: 'rumah-6',
-        title: 'Rumah Keluarga',
-        category: 'rumah',
-        icon: '🏡',
-        x: 1750,
-        y: 560,
-        description: 'Rumah keluarga yang menjadi tempat berkumpul, makan bersama, dan beristirahat setelah beraktivitas.',
-        images: [
-          'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=800&q=80'
-        ],
-        likes: 9
-      },
-      {
-        id: 'rumah-7',
-        title: 'Rumah Sudut Taman',
-        category: 'rumah',
-        icon: '🏠',
-        x: 400,
-        y: 500,
-        description: 'Rumah kecil di dekat taman yang cocok menjadi tempat singgah dan berkumpul.',
-        images: [
-          'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=800&q=80'
-        ],
-        likes: 4
-      }
-    ];
-
-    // State Variables
-    let houses = [];
-    let activeFilter = 'all';
-    let searchQuery = '';
-    let selectedHouseId = null;
-    let isPlacingMode = false;
-    let pendingCoords = null;
-
-    // Viewport Transformation State
-    let scale = 0.8;
-    let panX = 0;
-    let panY = 0;
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
-
-    // Canvas Element
-    const canvas = document.getElementById('mapCanvas');
-    const ctx = canvas.getContext('2d');
-    const viewport = document.getElementById('mapViewport');
-    const mapWorld = document.getElementById('mapWorld');
-    const pinsContainer = document.getElementById('pinsContainer');
-
-    window.addEventListener('load', () => {
-      lucide.createIcons();
-      loadHouseData();
-      initCanvasSize();
-      centerMapToMiddle();
-      renderCanvasMap();
-      renderHousePins();
-      setupEventListeners();
-    });
-
-    function loadHouseData() {
-      const saved = localStorage.getItem('cute_neighborhood_houses');
-      if (saved) {
-        try {
-          houses = JSON.parse(saved);
-          houses = houses.map(house => ({
-            ...house,
-            category: house.category || 'rumah',
-            icon: house.icon || '🏠',
-            description: house.description || 'Kenangan di rumah ini.',
-            images: Array.isArray(house.images) ? house.images : [],
-            likes: Number.isFinite(house.likes) ? house.likes : 0
-          }));
-        } catch (e) {
-          houses = [...DEFAULT_HOUSES];
-        }
-      } else {
-        houses = [...DEFAULT_HOUSES];
-        saveHouseData();
-      }
-    }
-
-    function saveHouseData() {
-      localStorage.setItem('cute_neighborhood_houses', JSON.stringify(houses));
-    }
-
-    function initCanvasSize() {
-      canvas.width = MAP_WIDTH;
-      canvas.height = MAP_HEIGHT;
-      mapWorld.style.width = MAP_WIDTH + 'px';
-      mapWorld.style.height = MAP_HEIGHT + 'px';
-    }
-
-    function centerMapToMiddle() {
-      const viewportWidth = viewport.clientWidth;
-      const viewportHeight = viewport.clientHeight;
-      scale = Math.min(viewportWidth / (MAP_WIDTH * 0.7), 0.85);
-      panX = (viewportWidth - MAP_WIDTH * scale) / 2;
-      panY = (viewportHeight - MAP_HEIGHT * scale) / 2;
-      applyTransform();
-    }
-
-    function applyTransform() {
-      mapWorld.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
-    }
-
-    /* Render Cute Canvas Map Graphics (Roads, Lakes, Trees, Parks) */
-    function renderCanvasMap() {
-      ctx.clearRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
-
-      // Grass Background Base
-      ctx.fillStyle = '#E2F0CB';
-      ctx.fillRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
-
-      // Draw Soft Grass Texture Stripes / Checkers
-      ctx.fillStyle = '#D4E7B5';
-      const tileSize = 100;
-      for (let x = 0; x < MAP_WIDTH; x += tileSize * 2) {
-        for (let y = 0; y < MAP_HEIGHT; y += tileSize * 2) {
-          ctx.fillRect(x, y, tileSize, tileSize);
-          ctx.fillRect(x + tileSize, y + tileSize, tileSize, tileSize);
-        }
-      }
-
-      // Draw Main Cute Pond / Lake
-      ctx.fillStyle = '#B5EAD7';
-      ctx.beginPath();
-      ctx.ellipse(1350, 950, 240, 160, Math.PI / 6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#92DFC8';
-      ctx.lineWidth = 12;
-      ctx.stroke();
-
-      // Duck / Water Lily Details on Lake
-      ctx.font = '28px sans-serif';
-      ctx.fillText('🪷', 1300, 930);
-      ctx.fillText('🦆', 1420, 970);
-
-      // Draw Neighborhood Roads (Warm Cream Colored Paths)
-      ctx.strokeStyle = '#FFF9E6';
-      ctx.lineWidth = 90;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-
-      // Road Outline Shadow
-      ctx.shadowColor = 'rgba(210, 180, 160, 0.3)';
-      ctx.shadowBlur = 10;
-
-      // Horizontal Main Road
-      ctx.beginPath();
-      ctx.moveTo(100, 650);
-      ctx.lineTo(1900, 650);
-      ctx.stroke();
-
-      // Vertical Loop Roads
-      ctx.beginPath();
-      ctx.moveTo(650, 200);
-      ctx.lineTo(650, 1300);
-      ctx.lineTo(1550, 1300);
-      ctx.lineTo(1550, 350);
-      ctx.lineTo(1100, 350);
-      ctx.lineTo(1100, 850);
-      ctx.stroke();
-
-      // Reset Shadow
-      ctx.shadowColor = 'transparent';
-
-      // Road Dash Center Lines
-      ctx.strokeStyle = '#FFE0B2';
-      ctx.lineWidth = 6;
-      ctx.setLineDash([20, 20]);
-      
-      ctx.beginPath();
-      ctx.moveTo(100, 650);
-      ctx.lineTo(1900, 650);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(650, 200);
-      ctx.lineTo(650, 1300);
-      ctx.lineTo(1550, 1300);
-      ctx.lineTo(1550, 350);
-      ctx.lineTo(1100, 350);
-      ctx.lineTo(1100, 850);
-      ctx.stroke();
-
-      ctx.setLineDash([]); // Reset line dash
-
-      // Draw Cute Trees and Deco Assets around the map
-      drawTreesAndFlowers();
-    }
-
-    function drawTreesAndFlowers() {
-      const decorationPositions = [
-        { x: 300, y: 300, icon: '🌳' }, { x: 400, y: 250, icon: '🌲' },
-        { x: 800, y: 300, icon: '🌸' }, { x: 950, y: 220, icon: '🌳' },
-        { x: 250, y: 800, icon: '🌻' }, { x: 350, y: 1200, icon: '🌳' },
-        { x: 850, y: 1100, icon: '🌸' }, { x: 1050, y: 1250, icon: '🌷' },
-        { x: 1700, y: 700, icon: '🌳' }, { x: 1800, y: 900, icon: '🌲' },
-        { x: 1200, y: 200, icon: '💐' }, { x: 1400, y: 220, icon: '🌸' }
-      ];
-
-      ctx.font = '36px sans-serif';
-      decorationPositions.forEach(deco => {
-        ctx.fillText(deco.icon, deco.x, deco.y);
-      });
-    }
-
-    function renderHousePins() {
-      pinsContainer.innerHTML = '';
-
-      const filtered = houses.filter(house => {
-        const matchesFilter = activeFilter === 'all' || house.category === activeFilter;
-        const matchesSearch = house.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                              house.description.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesFilter && matchesSearch;
-      });
-
-      filtered.forEach(house => {
-        const pinEl = document.createElement('div');
-        pinEl.className = 'absolute pointer-events-auto transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group';
-        pinEl.style.left = house.x + 'px';
-        pinEl.style.top = house.y + 'px';
-        pinEl.id = `pin-${house.id}`;
-
-        pinEl.innerHTML = `
-          <div onclick="openMemoryModal('${house.id}')" class="relative flex flex-col items-center">
+<body class="w-screen h-screen m-0 p-0 overflow-hidden text-pink-900 relative">
+
+    <!-- Main Map Viewport -->
+    <div id="map-container" class="w-full h-full absolute inset-0 z-0 bg-[#e8f5e9] cursor-grab active:cursor-grabbing overflow-hidden">
+        <svg id="map-svg" viewBox="0 0 1600 1000" class="w-full h-full origin-center transition-transform duration-75">
+            <defs>
+                <!-- Gradients for soft map visuals -->
+                <radialGradient id="bgGrad" cx="50%" cy="50%" r="70%">
+                    <stop offset="0%" stop-color="#f0fdf4"/>
+                    <stop offset="70%" stop-color="#dcfce7"/>
+                    <stop offset="100%" stop-color="#bbf7d0"/>
+                </radialGradient>
+                <radialGradient id="hillGrad" cx="50%" cy="40%" r="60%">
+                    <stop offset="0%" stop-color="#bbf7d0"/>
+                    <stop offset="100%" stop-color="#86efac"/>
+                </radialGradient>
+                <linearGradient id="riverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#7dd3fc"/>
+                    <stop offset="50%" stop-color="#38bdf8"/>
+                    <stop offset="100%" stop-color="#0284c7"/>
+                </linearGradient>
+                <linearGradient id="pathGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#ffe4e6"/>
+                    <stop offset="100%" stop-color="#fed7aa"/>
+                </linearGradient>
+                <!-- Shadow Filter -->
+                <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="2" dy="6" stdDeviation="4" flood-color="#15803d" flood-opacity="0.2"/>
+                </filter>
+            </defs>
+
+            <!-- Background Grass Landscape -->
+            <rect width="1600" height="1000" fill="url(#bgGrad)"/>
+
+            <!-- Outer Foliage Edge Bush Background -->
+            <path d="M -50 -50 
+                     Q 200 40 400 -20 
+                     Q 600 50 800 -30 
+                     Q 1000 60 1200 -20 
+                     Q 1400 50 1650 -50 
+                     L 1650 1050 L -50 1050 Z" 
+                  fill="#86efac" opacity="0.4"/>
+            <path d="M 0 0 
+                     Q 250 80 500 10 
+                     Q 750 90 1000 20 
+                     Q 1250 80 1600 0 
+                     L 1600 1000 L 0 1000 Z" 
+                  fill="#4ade80" opacity="0.25"/>
+
+            <!-- Top Background Forest Trees -->
+            <g fill="#15803d" opacity="0.3">
+                <circle cx="100" cy="40" r="70"/><circle cx="220" cy="50" r="80"/>
+                <circle cx="360" cy="30" r="75"/><circle cx="500" cy="60" r="90"/>
+                <circle cx="650" cy="35" r="80"/><circle cx="800" cy="50" r="95"/>
+                <circle cx="950" cy="30" r="80"/><circle cx="1100" cy="60" r="85"/>
+                <circle cx="1250" cy="40" r="90"/><circle cx="1400" cy="50" r="75"/>
+                <circle cx="1520" cy="30" r="80"/>
+            </g>
+
+            <!-- Rolling Hills Overlay -->
+            <path d="M 100 280 C 400 180, 700 320, 1000 200 C 1300 100, 1500 250, 1650 220 L 1650 0 L -50 0 Z" fill="url(#hillGrad)"/>
             
-            <!-- Cute Tooltip on Hover -->
-            <div class="opacity-0 group-hover:opacity-100 transition-all duration-200 transform group-hover:-translate-y-2 pointer-events-none absolute -top-12 bg-white text-slate-800 font-bold text-xs px-3 py-1.5 rounded-2xl shadow-lg border-2 border-pastel-pink whitespace-nowrap z-30 tooltip-arrow">
-              ${house.title}
+            <!-- Winding Pink Paths System -->
+            <g stroke="url(#pathGrad)" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#softShadow)">
+                <!-- Main central loops connecting all house locations -->
+                <path d="M 800 540 C 700 540, 500 560, 350 530" stroke-width="42"/>
+                <path d="M 800 540 C 900 540, 1100 520, 1250 430" stroke-width="42"/>
+                <path d="M 800 540 C 800 420, 760 320, 600 280" stroke-width="36"/>
+                <path d="M 800 540 C 800 650, 750 780, 620 780" stroke-width="38"/>
+                <path d="M 800 540 C 900 600, 1100 680, 1200 700" stroke-width="38"/>
+                <path d="M 600 280 C 700 250, 850 240, 950 280" stroke-width="32"/>
+                <path d="M 950 280 C 1050 300, 1180 320, 1250 430" stroke-width="32"/>
+                <path d="M 350 530 C 250 520, 200 650, 260 780" stroke-width="34"/>
+                <path d="M 260 780 C 350 880, 500 860, 620 780" stroke-width="34"/>
+                <path d="M 620 780 C 800 880, 1000 850, 1200 700" stroke-width="34"/>
+            </g>
+
+            <!-- River Stream Winding through map -->
+            <path d="M 820 180 
+                     C 800 280, 860 380, 840 480 
+                     C 820 580, 750 620, 680 660 
+                     C 600 710, 480 720, 380 780 
+                     C 280 840, 220 900, 150 1000" 
+                  fill="none" stroke="url(#riverGrad)" stroke-width="36" stroke-linecap="round" filter="url(#softShadow)"/>
+            <!-- River Waves / Highlights -->
+            <path d="M 820 180 C 800 280, 860 380, 840 480 C 820 580, 750 620, 680 660 C 600 710, 480 720, 380 780 C 280 840, 220 900, 150 1000" 
+                  fill="none" stroke="#ffffff" stroke-width="6" stroke-dasharray="20,30" opacity="0.6"/>
+
+            <!-- Covered Pink Bridge (Bottom Left crossing the river) -->
+            <g id="bridge" transform="translate(290, 810) rotate(-25)">
+                <!-- Bridge Deck -->
+                <rect x="-60" y="-20" width="120" height="40" rx="8" fill="#fb7185" stroke="#f43f5e" stroke-width="3"/>
+                <rect x="-55" y="-15" width="110" height="30" rx="4" fill="#fde8e8"/>
+                <!-- Arch support -->
+                <path d="M -50 20 Q 0 -10 50 20" fill="none" stroke="#e11d48" stroke-width="6"/>
+                <!-- Pillars -->
+                <rect x="-50" y="-35" width="8" height="50" fill="#f43f5e"/>
+                <rect x="-20" y="-35" width="8" height="50" fill="#f43f5e"/>
+                <rect x="12" y="-35" width="8" height="50" fill="#f43f5e"/>
+                <rect x="42" y="-35" width="8" height="50" fill="#f43f5e"/>
+                <!-- Roof Canopy -->
+                <polygon points="-70,-35 0,-65 70,-35" fill="#f43f5e" stroke="#be123c" stroke-width="3"/>
+                <polygon points="-60,-35 0,-60 60,-35" fill="#fb7185"/>
+                <!-- Roof Ornaments -->
+                <circle cx="0" cy="-68" r="6" fill="#facc15"/>
+            </g>
+
+            <!-- Giant Daffodil (Right) -->
+            <g transform="translate(1420, 480)">
+                <!-- Stem -->
+                <path d="M 0 0 Q -20 150 30 350" fill="none" stroke="#4ade80" stroke-width="16" stroke-linecap="round"/>
+                <!-- Leaves -->
+                <path d="M 10 250 Q -60 180 -40 100" fill="none" stroke="#22c55e" stroke-width="12" stroke-linecap="round"/>
+                <!-- Flower Head -->
+                <g transform="translate(0,0)">
+                    <!-- Yellow Petals -->
+                    <ellipse cx="0" cy="-60" rx="25" ry="50" fill="#facc15"/>
+                    <ellipse cx="0" cy="60" rx="25" ry="50" fill="#facc15"/>
+                    <ellipse cx="-60" cy="0" rx="50" ry="25" fill="#facc15"/>
+                    <ellipse cx="60" cy="0" rx="50" ry="25" fill="#facc15"/>
+                    <ellipse cx="-40" cy="-40" rx="25" ry="50" fill="#fde047" transform="rotate(45 -40 -40)"/>
+                    <ellipse cx="40" cy="40" rx="25" ry="50" fill="#fde047" transform="rotate(45 40 40)"/>
+                    <!-- Trumpet Center -->
+                    <circle cx="0" cy="0" r="30" fill="#f97316"/>
+                    <circle cx="0" cy="0" r="22" fill="#facc15"/>
+                </g>
+            </g>
+
+            <!-- Giant Pink Rose Top Center -->
+            <g transform="translate(720, 100)">
+                <circle cx="0" cy="0" r="35" fill="#f43f5e"/>
+                <circle cx="-5" cy="-5" r="25" fill="#fb7185"/>
+                <circle cx="5" cy="5" r="15" fill="#fda4af"/>
+                <path d="M -30 20 Q 0 40 30 20" fill="none" stroke="#4ade80" stroke-width="8"/>
+            </g>
+
+            <!-- Large Daisies (Left & Top Right) -->
+            <g transform="translate(180, 240)">
+                <path d="M 0 0 L 0 120" stroke="#4ade80" stroke-width="10"/>
+                <g>
+                    <circle cx="0" cy="-30" r="12" fill="#fff"/><circle cx="0" cy="30" r="12" fill="#fff"/>
+                    <circle cx="-30" cy="0" r="12" fill="#fff"/><circle cx="30" cy="0" r="12" fill="#fff"/>
+                    <circle cx="-20" cy="-20" r="12" fill="#fff"/><circle cx="20" cy="20" r="12" fill="#fff"/>
+                    <circle cx="20" cy="-20" r="12" fill="#fff"/><circle cx="-20" cy="20" r="12" fill="#fff"/>
+                    <circle cx="0" cy="0" r="18" fill="#facc15"/>
+                </g>
+            </g>
+
+            <!-- Wild Strawberry Bushes scattered around -->
+            <g transform="translate(480, 420)">
+                <circle cx="0" cy="0" r="18" fill="#22c55e"/>
+                <circle cx="-10" cy="-5" r="12" fill="#f43f5e"/><circle cx="8" cy="6" r="10" fill="#f43f5e"/>
+                <circle cx="-8" cy="-5" r="2" fill="#fef08a"/><circle cx="10" cy="6" r="2" fill="#fef08a"/>
+            </g>
+            <g transform="translate(1120, 580)">
+                <circle cx="0" cy="0" r="22" fill="#22c55e"/>
+                <circle cx="8" cy="-8" r="14" fill="#f43f5e"/>
+                <circle cx="-10" cy="8" r="12" fill="#f43f5e"/>
+            </g>
+
+            <!-- ================= HOUSES LAYER ================= -->
+
+            <!-- 1. CENTER: Strawberry Shortcake's Cafe & House -->
+            <g id="house-strawberry" class="house-group" transform="translate(800, 520)" filter="url(#softShadow)">
+                <!-- Base Patio -->
+                <ellipse cx="0" cy="40" rx="110" ry="35" fill="#fbcfe8" stroke="#f43f5e" stroke-width="3"/>
+                <!-- Outdoor Cafe Chairs & Umbrella -->
+                <g transform="translate(-80, 25)">
+                    <circle cx="0" cy="0" r="18" fill="#ffffff" stroke="#f43f5e" stroke-width="2"/>
+                    <path d="M 0 -25 L 0 0" stroke="#f43f5e" stroke-width="3"/>
+                    <path d="M -22 -25 Q 0 -45 22 -25 Z" fill="#f43f5e"/>
+                </g>
+                <g transform="translate(80, 25)">
+                    <circle cx="0" cy="0" r="18" fill="#ffffff" stroke="#f43f5e" stroke-width="2"/>
+                    <path d="M 0 -25 L 0 0" stroke="#f43f5e" stroke-width="3"/>
+                    <path d="M -22 -25 Q 0 -45 22 -25 Z" fill="#f43f5e"/>
+                </g>
+                <!-- Main Wall -->
+                <rect x="-70" y="-30" width="140" height="70" rx="12" fill="#fff7ed" stroke="#fdba74" stroke-width="4"/>
+                <!-- Green Striped Awning -->
+                <path d="M -75 -10 L 75 -10 L 65 10 L -65 10 Z" fill="#4ade80" stroke="#16a34a" stroke-width="3"/>
+                <path d="M -75 -10 L -60 -10 L -50 10 L -65 10 Z M -30 -10 L -15 -10 L -5 10 L -20 10 Z M 15 -10 L 30 -10 L 40 10 L 25 10 Z M 60 -10 L 75 -10 L 65 10 L 50 10 Z" fill="#ffffff" opacity="0.6"/>
+                <!-- Door & Windows -->
+                <rect x="-20" y="5" width="40" height="35" rx="6" fill="#f43f5e"/>
+                <circle cx="12" cy="22" r="3" fill="#facc15"/>
+                <rect x="-55" y="-5" width="28" height="25" rx="4" fill="#38bdf8" stroke="#ffffff" stroke-width="3"/>
+                <rect x="27" y="-5" width="28" height="25" rx="4" fill="#38bdf8" stroke="#ffffff" stroke-width="3"/>
+                <!-- Strawberry Roof -->
+                <path d="M -90 -25 C -90 -120, 90 -120, 90 -25 Z" fill="#e11d48" stroke="#be123c" stroke-width="4"/>
+                <!-- Seeds on Roof -->
+                <g fill="#fef08a">
+                    <ellipse cx="-40" cy="-60" rx="4" ry="7"/><ellipse cx="0" cy="-80" rx="4" ry="7"/>
+                    <ellipse cx="40" cy="-60" rx="4" ry="7"/><ellipse cx="-20" cy="-40" rx="4" ry="7"/>
+                    <ellipse cx="20" cy="-40" rx="4" ry="7"/><ellipse cx="-60" cy="-45" rx="4" ry="7"/>
+                    <ellipse cx="60" cy="-45" rx="4" ry="7"/>
+                </g>
+                <!-- Leaf Crown -->
+                <path d="M 0 -105 Q -30 -125 -60 -100 Q -20 -100 0 -105 Q 20 -100 60 -100 Q 30 -125 0 -105 Z" fill="#22c55e" stroke="#15803d" stroke-width="3"/>
+                <circle cx="0" cy="-115" r="10" fill="#f43f5e"/>
+            </g>
+
+            <!-- 2. LEFT: Plum Pudding's Purple Mansion -->
+            <g id="house-plum" class="house-group" transform="translate(320, 500)" filter="url(#softShadow)">
+                <rect x="-80" y="-30" width="160" height="80" rx="10" fill="#faf5ff" stroke="#c084fc" stroke-width="4"/>
+                <polygon points="-90,-30 0,-110 90,-30" fill="#7e22ce" stroke="#581c87" stroke-width="4"/>
+                <polygon points="-60,-30 0,-90 60,-30" fill="#9333ea"/>
+                <!-- Porch Stairs -->
+                <rect x="-35" y="35" width="70" height="15" rx="4" fill="#e9d5ff" stroke="#c084fc" stroke-width="2"/>
+                <rect x="-20" y="5" width="40" height="40" rx="6" fill="#6b21a8"/>
+                <!-- Windows -->
+                <circle cx="-50" cy="0" r="18" fill="#38bdf8" stroke="#ffffff" stroke-width="3"/>
+                <circle cx="50" cy="0" r="18" fill="#38bdf8" stroke="#ffffff" stroke-width="3"/>
+                <circle cx="0" cy="-55" r="14" fill="#fef08a" stroke="#ffffff" stroke-width="3"/>
+            </g>
+
+            <!-- 3. TOP RIGHT: Raspberry Torte's Boutique -->
+            <g id="house-raspberry" class="house-group" transform="translate(1220, 400)" filter="url(#softShadow)">
+                <ellipse cx="0" cy="35" rx="80" ry="25" fill="#fce7f3"/>
+                <rect x="-60" y="-20" width="120" height="60" rx="12" fill="#fff1f2" stroke="#f43f5e" stroke-width="4"/>
+                <!-- Bumpy Raspberry Dome Roof -->
+                <g fill="#9d174d" stroke="#831843" stroke-width="3">
+                    <circle cx="-50" cy="-20" r="22"/><circle cx="-20" cy="-25" r="24"/>
+                    <circle cx="20" cy="-25" r="24"/><circle cx="50" cy="-20" r="22"/>
+                    <circle cx="-35" cy="-45" r="22"/><circle cx="0" cy="-50" r="26"/>
+                    <circle cx="35" cy="-45" r="22"/><circle cx="-18" cy="-70" r="20"/>
+                    <circle cx="18" cy="-70" r="20"/><circle cx="0" cy="-85" r="18"/>
+                </g>
+                <rect x="-18" y="10" width="36" height="30" rx="6" fill="#be123c"/>
+                <circle cx="-35" cy="10" r="12" fill="#38bdf8" stroke="#fff" stroke-width="2"/>
+                <circle cx="35" cy="10" r="12" fill="#38bdf8" stroke="#fff" stroke-width="2"/>
+            </g>
+
+            <!-- 4. BOTTOM RIGHT: Blueberry Muffin's Bookstore / Gazebo -->
+            <g id="house-blueberry" class="house-group" transform="translate(1180, 680)" filter="url(#softShadow)">
+                <!-- Circular Stairs -->
+                <ellipse cx="0" cy="45" rx="85" ry="30" fill="#cbd5e1"/>
+                <ellipse cx="0" cy="35" rx="70" ry="25" fill="#e2e8f0"/>
+                <!-- Gazebo Glass Body -->
+                <rect x="-55" y="-25" width="110" height="60" rx="8" fill="#e0f2fe" stroke="#0284c7" stroke-width="4" opacity="0.9"/>
+                <line x1="-20" y1="-25" x2="-20" y2="35" stroke="#0284c7" stroke-width="3"/>
+                <line x1="20" y1="-25" x2="20" y2="35" stroke="#0284c7" stroke-width="3"/>
+                <!-- Royal Blue Glass Dome -->
+                <path d="M -65 -25 C -65 -90, 65 -90, 65 -25 Z" fill="#0369a1" stroke="#075985" stroke-width="4"/>
+                <path d="M -45 -25 C -45 -75, 45 -75, 45 -25 Z" fill="#0284c7"/>
+                <!-- Gold Top Finial -->
+                <circle cx="0" cy="-92" r="12" fill="#facc15" stroke="#ca8a04" stroke-width="3"/>
+            </g>
+
+            <!-- 5. BOTTOM CENTER: Strawberry Tea Gazebo -->
+            <g id="house-gazebo" class="house-group" transform="translate(600, 750)" filter="url(#softShadow)">
+                <ellipse cx="0" cy="25" rx="70" ry="22" fill="#ffe4e6"/>
+                <!-- Pillars -->
+                <rect x="-45" y="-20" width="8" height="45" fill="#ffffff" stroke="#fda4af" stroke-width="2"/>
+                <rect x="-15" y="-20" width="8" height="45" fill="#ffffff" stroke="#fda4af" stroke-width="2"/>
+                <rect x="15" y="-20" width="8" height="45" fill="#ffffff" stroke="#fda4af" stroke-width="2"/>
+                <rect x="45" y="-20" width="8" height="45" fill="#ffffff" stroke="#fda4af" stroke-width="2"/>
+                <!-- Conical Pink Roof -->
+                <polygon points="-60,-20 0,-75 60,-20" fill="#f43f5e" stroke="#be123c" stroke-width="3"/>
+                <polygon points="-45,-20 0,-65 45,-20" fill="#fb7185"/>
+                <!-- Strawberry Finial -->
+                <circle cx="0" cy="-80" r="10" fill="#e11d48"/>
+                <path d="M -4 -88 L 0 -92 L 4 -88" fill="none" stroke="#22c55e" stroke-width="3"/>
+            </g>
+
+            <!-- 6. TOP CENTER: Orange Blossom's Garden Shop -->
+            <g id="house-orange" class="house-group" transform="translate(580, 260)" filter="url(#softShadow)">
+                <rect x="-65" y="-20" width="130" height="60" rx="10" fill="#fff7ed" stroke="#f97316" stroke-width="4"/>
+                <path d="M -75 -20 L 75 -20 L 0 -80 Z" fill="#ea580c" stroke="#c2410c" stroke-width="4"/>
+                <!-- Striped Canopy -->
+                <path d="M -70 0 L 70 0 L 60 20 L -60 20 Z" fill="#fb923c"/>
+                <path d="M -70 0 L -50 0 L -40 20 L -60 20 Z M -10 0 L 10 0 L 20 20 L 0 20 Z M 30 0 L 50 0 L 60 20 L 40 20 Z" fill="#ffffff" opacity="0.6"/>
+                <rect x="-18" y="10" width="36" height="30" rx="4" fill="#c2410c"/>
+                <circle cx="0" cy="-45" r="14" fill="#f97316" stroke="#ffffff" stroke-width="2"/>
+            </g>
+
+            <!-- 7. TOP RIGHT HILL: Lemon Meringue's Salon -->
+            <g id="house-lemon" class="house-group" transform="translate(950, 260)" filter="url(#softShadow)">
+                <rect x="-60" y="-20" width="120" height="60" rx="10" fill="#fef9c3" stroke="#eab308" stroke-width="4"/>
+                <path d="M -70 -20 Q 0 -90 70 -20 Z" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
+                <rect x="-15" y="10" width="30" height="30" rx="4" fill="#ca8a04"/>
+                <circle cx="-30" cy="5" r="12" fill="#38bdf8" stroke="#fff" stroke-width="2"/>
+                <circle cx="30" cy="5" r="12" fill="#38bdf8" stroke="#fff" stroke-width="2"/>
+                <path d="M 0 -65 L 12 -45 L -12 -45 Z" fill="#4ade80"/>
+            </g>
+
+        </svg>
+
+        <!-- Floating Particles Overlay Canvas -->
+        <canvas id="particle-canvas" class="absolute inset-0 w-full h-full z-10"></canvas>
+    </div>
+
+    <!-- UI Header -->
+    <header class="absolute top-4 left-4 right-4 z-20 flex flex-wrap justify-between items-center gap-3 pointer-events-none">
+        <div class="glass-panel px-5 py-3 rounded-3xl flex items-center gap-3 pointer-events-auto transform transition hover:scale-105">
+            <span class="text-3xl animate-bounce">🍓</span>
+            <div>
+                <h1 class="font-fredoka text-xl md:text-2xl text-pink-600 tracking-wide leading-tight flex items-center gap-2">
+                    Berry Bitty City <span class="text-xs bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full border border-pink-300">Map</span>
+                </h1>
+                <p class="text-xs text-pink-500 font-semibold">Dunia Manis Strawberry Shortcake ✨</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 pointer-events-auto">
+            <button id="bgm-btn" class="glass-button px-4 py-2.5 rounded-2xl flex items-center gap-2 text-pink-600 font-fredoka text-sm" title="Putar Musik Santai">
+                <i class="fa-solid fa-music text-pink-500"></i>
+                <span id="bgm-text" class="hidden sm:inline">Musik: Off</span>
+            </button>
+            <button id="reset-view-btn" class="glass-button px-4 py-2.5 rounded-2xl flex items-center gap-2 text-pink-600 font-fredoka text-sm" title="Reset Zoom/Pandangan">
+                <i class="fa-solid fa-arrows-to-dot text-pink-500"></i>
+                <span class="hidden sm:inline">Reset Peta</span>
+            </button>
+            <button id="info-btn" class="glass-button w-11 h-11 rounded-2xl flex items-center justify-center text-pink-600 text-lg" title="Petunjuk">
+                <i class="fa-solid fa-circle-question"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Zoom In / Out Controls (Bottom Right) -->
+    <div class="absolute bottom-6 right-6 z-20 flex flex-col gap-2">
+        <button id="zoom-in-btn" class="glass-button w-12 h-12 rounded-2xl flex items-center justify-center text-pink-600 text-xl font-bold shadow-lg">
+            <i class="fa-solid fa-plus"></i>
+        </button>
+        <button id="zoom-out-btn" class="glass-button w-12 h-12 rounded-2xl flex items-center justify-center text-pink-600 text-xl font-bold shadow-lg">
+            <i class="fa-solid fa-minus"></i>
+        </button>
+    </div>
+
+    <!-- Bottom Instruction Bar -->
+    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none w-11/12 max-w-md">
+        <div class="glass-panel px-5 py-2.5 rounded-full text-center text-xs md:text-sm text-pink-700 font-bold shadow-xl flex items-center justify-center gap-2 border-2 border-pink-300">
+            <span class="text-lg">🏡</span>
+            <span>Klik pada <b>Rumah Karakter</b> mana saja untuk membuka Galeri Foto & Video!</span>
+        </div>
+    </div>
+
+    <!-- Hover Tooltip -->
+    <div id="hover-tooltip" class="absolute z-30 opacity-0 pointer-events-none transition-opacity duration-200 -translate-x-1/2 -translate-y-full mb-3">
+        <div class="glass-panel px-4 py-2 rounded-2xl flex items-center gap-2 shadow-2xl border-2 border-pink-400">
+            <span id="tooltip-icon" class="text-2xl">🍓</span>
+            <div>
+                <h4 id="tooltip-title" class="font-fredoka text-sm text-pink-600 font-bold">Rumah Stroberi</h4>
+                <p id="tooltip-owner" class="text-[11px] text-pink-500 font-semibold">Strawberry Shortcake</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Welcome Modal -->
+    <div id="info-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-pink-950/40 backdrop-blur-sm transition-opacity">
+        <div class="glass-panel p-6 md:p-8 rounded-3xl max-w-lg w-11/12 text-center relative border-4 border-pink-300 shadow-2xl">
+            <button class="close-info absolute top-4 right-4 text-pink-400 hover:text-pink-600 text-2xl font-bold">✕</button>
+            <div class="text-5xl mb-2">🌸🍓✨</div>
+            <h2 class="font-fredoka text-2xl md:text-3xl text-pink-600 mb-2">Selamat Datang di Berry Bitty City!</h2>
+            <p class="text-sm text-pink-700 leading-relaxed mb-5">
+                Jelajahi peta bergaya Strawberry Shortcake! Geser peta, perbesar, dan klik rumah favoritmu untuk menyimpan memori foto & video.
+            </p>
+            <div class="text-xs text-pink-700 text-left space-y-2.5 mb-6 bg-pink-50/80 p-4 rounded-2xl border border-pink-200">
+                <p class="flex items-start gap-2"><span>👉</span> <span><b>Geser Peta:</b> Klik & tahan mouse / geser layar untuk menjelajah.</span></p>
+                <p class="flex items-start gap-2"><span>🔎</span> <span><b>Perbesar:</b> Gunakan tombol + / - atau scroll mouse.</span></p>
+                <p class="flex items-start gap-2"><span>🏡</span> <span><b>Galeri Memori:</b> Klik rumah mana saja untuk mengunggah foto & video tanpa batas!</span></p>
+            </div>
+            <button class="close-info glass-button px-8 py-3 rounded-full font-fredoka text-pink-600 text-base shadow-lg transition active:scale-95">
+                Mulai Jelajah Peta 💕
+            </button>
+        </div>
+    </div>
+
+    <!-- Gallery Modal -->
+    <div id="gallery-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-pink-950/50 backdrop-blur-md hidden transition-all p-3 md:p-6">
+        <div class="glass-panel w-full max-w-4xl max-h-[90vh] rounded-3xl flex flex-col overflow-hidden border-4 border-pink-300 shadow-2xl relative">
+            
+            <!-- Modal Header -->
+            <div id="modal-header-bg" class="p-5 bg-gradient-to-r from-pink-200 via-rose-100 to-pink-200 border-b border-pink-300 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div id="modal-house-icon" class="text-4xl bg-white p-2.5 rounded-2xl shadow-sm border border-pink-200">🍓</div>
+                    <div>
+                        <h2 id="modal-house-name" class="font-fredoka text-xl md:text-2xl text-pink-600">Berry Cafe & Rumah Stroberi</h2>
+                        <p id="modal-house-owner" class="text-xs font-bold text-pink-500">Pemilik: Strawberry Shortcake</p>
+                    </div>
+                </div>
+                <button id="close-gallery" class="w-10 h-10 rounded-full bg-white text-pink-500 hover:bg-pink-100 flex items-center justify-center text-xl font-bold shadow transition border border-pink-200">
+                    ✕
+                </button>
             </div>
 
-            <!-- Glowing Pulse effect -->
-            <div class="absolute inset-0 rounded-full bg-pastel-pink/40 animate-ping opacity-75"></div>
+            <!-- Modal Content Body -->
+            <div class="p-5 overflow-y-auto flex-1 space-y-5">
+                
+                <!-- Category Tabs & Add Button -->
+                <div class="flex flex-wrap justify-between items-center gap-3 bg-pink-50/90 p-3 rounded-2xl border border-pink-200">
+                    <div class="flex gap-2">
+                        <button id="tab-all" class="tab-btn px-4 py-1.5 rounded-full font-fredoka text-xs bg-pink-500 text-white shadow">Semua Media</button>
+                        <button id="tab-photos" class="tab-btn px-4 py-1.5 rounded-full font-fredoka text-xs bg-white text-pink-600 hover:bg-pink-100">📷 Foto</button>
+                        <button id="tab-videos" class="tab-btn px-4 py-1.5 rounded-full font-fredoka text-xs bg-white text-pink-600 hover:bg-pink-100">🎥 Video</button>
+                    </div>
 
-            <!-- Main Pin Badge -->
-            <div class="w-14 h-14 bg-white rounded-3xl border-4 border-pastel-pinkLight shadow-cute flex items-center justify-center text-2xl transition-all duration-300 group-hover:scale-125 group-hover:rotate-6 group-hover:border-pastel-pink z-10">
-              ${house.icon || '🏠'}
+                    <button id="toggle-upload-btn" class="glass-button px-4 py-1.5 rounded-full font-fredoka text-xs text-pink-600 flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Tambah Memori Baru
+                    </button>
+                </div>
+
+                <!-- Media Upload Form -->
+                <div id="upload-card" class="hidden bg-white p-4 rounded-2xl border-2 border-dashed border-pink-300 space-y-3">
+                    <h4 class="font-fredoka text-pink-600 text-sm flex items-center gap-2">
+                        <span>✨ Unggah Foto / Video Baru (Tersimpan di Perangkat)</span>
+                    </h4>
+                    <form id="upload-form" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="col-span-1 md:col-span-1">
+                            <label class="cursor-pointer w-full h-28 bg-pink-50 hover:bg-pink-100 rounded-xl border border-pink-300 flex flex-col items-center justify-center text-pink-500 p-2 text-center transition">
+                                <i class="fa-solid fa-cloud-arrow-up text-2xl mb-1"></i>
+                                <span id="file-chosen-text" class="text-[11px] font-bold">Pilih Foto / Video</span>
+                                <input type="file" id="media-file-input" accept="image/*,video/*" class="hidden" required />
+                            </label>
+                        </div>
+                        <div class="col-span-1 md:col-span-2 flex flex-col justify-between gap-2">
+                            <input type="text" id="media-caption-input" placeholder="Tuliskan catatan atau cerita manis..." class="w-full text-xs p-3 rounded-xl border border-pink-200 focus:outline-none focus:ring-2 focus:ring-pink-400">
+                            <div class="flex gap-2">
+                                <select id="media-sticker-input" class="text-xs p-2.5 rounded-xl border border-pink-200 bg-white text-pink-600">
+                                    <option value="🍓">Sticker: 🍓 Stroberi</option>
+                                    <option value="🌸">Sticker: 🌸 Bunga</option>
+                                    <option value="💖">Sticker: 💖 Cinta</option>
+                                    <option value="🍰">Sticker: 🍰 Kue</option>
+                                    <option value="⭐">Sticker: ⭐ Bintang</option>
+                                </select>
+                                <button type="submit" class="flex-1 glass-button bg-pink-500 text-pink-600 font-fredoka text-xs py-2.5 rounded-xl shadow transition">
+                                    Simpan Memori 💖
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Media Grid -->
+                <div>
+                    <div id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+
+                    <!-- Empty State -->
+                    <div id="empty-state" class="hidden text-center py-12 bg-pink-50/50 rounded-2xl border border-pink-200">
+                        <div class="text-5xl mb-2">🌸</div>
+                        <p class="font-fredoka text-pink-500 text-base">Belum ada memori di rumah ini!</p>
+                        <p class="text-xs text-pink-400 mt-1">Klik tombol "+ Tambah Memori Baru" untuk mengunggah foto/video.</p>
+                    </div>
+                </div>
+
             </div>
 
-            <!-- Pin Bottom Shadow Point -->
-            <div class="w-4 h-2 bg-slate-800/20 rounded-full mt-1 blur-[1px]"></div>
-          </div>
-        `;
+            <!-- Modal Footer -->
+            <div class="p-3 bg-pink-100/70 border-t border-pink-200 text-center text-xs text-pink-600 font-bold flex justify-between items-center px-6">
+                <span>🎀 Berry Bitty City Local Memory Bank</span>
+                <span>IndexedDB Safe Storage</span>
+            </div>
+        </div>
+    </div>
 
-        pinsContainer.appendChild(pinEl);
-      });
-    }
+    <!-- Lightbox Modal for Full View -->
+    <div id="lightbox-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 hidden p-4">
+        <button id="close-lightbox" class="absolute top-5 right-5 text-white hover:text-pink-300 text-3xl font-bold z-10">✕</button>
+        <div id="lightbox-body" class="max-w-4xl max-h-[85vh] flex items-center justify-center rounded-2xl overflow-hidden shadow-2xl"></div>
+    </div>
 
-    function setFilter(category) {
-      activeFilter = category;
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        if (btn.dataset.filter === category) {
-          btn.className = 'filter-btn active px-3 py-1.5 rounded-2xl text-xs font-bold transition-all bg-pastel-pink text-white shadow-cute-sm';
-        } else {
-          btn.className = 'filter-btn px-3 py-1.5 rounded-2xl text-xs font-bold transition-all bg-pastel-pinkLight text-slate-600 hover:bg-pastel-pink/20';
+    <script>
+        // HOUSES CONFIGURATION
+        const HOUSES_CONFIG = {
+            'strawberry': {
+                id: 'strawberry',
+                name: 'Berry Cafe & Rumah Stroberi',
+                owner: 'Strawberry Shortcake 🍓',
+                icon: '🍓',
+                x: 800, y: 520,
+                desc: 'Pusat kota tempat memanggang kue lezat dan berkumpul!',
+                defaultMedia: [
+                    { id: 'def1', type: 'image', url: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=600&q=80', caption: 'Kue Tar Stroberi Spesial 🍰', date: '2026-05-10', sticker: '🍓' },
+                    { id: 'def2', type: 'image', url: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=600&q=80', caption: 'Panen Stroberi Manis 🍓', date: '2026-05-12', sticker: '🌸' }
+                ]
+            },
+            'plum': {
+                id: 'plum',
+                name: 'Istana Studio Plum',
+                owner: 'Plum Pudding 🔮',
+                icon: '🔮',
+                x: 320, y: 500,
+                desc: 'Mansion ungu tempat latihan menari ballet & musik.',
+                defaultMedia: [
+                    { id: 'def3', type: 'image', url: 'https://images.unsplash.com/photo-1518834107812-67b0b7c58434?auto=format&fit=crop&w=600&q=80', caption: 'Latihan Menari Bersama 🩰', date: '2026-04-12', sticker: '⭐' }
+                ]
+            },
+            'raspberry': {
+                id: 'raspberry',
+                name: 'Butik Raspberry',
+                owner: 'Raspberry Torte 🍇',
+                icon: '🍇',
+                x: 1220, y: 400,
+                desc: 'Butik fashion gaun pita yang sangat anggun.',
+                defaultMedia: [
+                    { id: 'def4', type: 'image', url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80', caption: 'Koleksi Gaun Ribbon 🎀', date: '2026-03-20', sticker: '💖' }
+                ]
+            },
+            'blueberry': {
+                id: 'blueberry',
+                name: 'Gazebo Toko Buku Blueberry',
+                owner: 'Blueberry Muffin 🫐',
+                icon: '🫐',
+                x: 1180, y: 680,
+                desc: 'Toko buku gazebo biru tempat membaca cerita manis.',
+                defaultMedia: [
+                    { id: 'def5', type: 'image', url: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=600&q=80', caption: 'Sudut Dongeng 📚', date: '2026-02-15', sticker: '⭐' }
+                ]
+            },
+            'gazebo': {
+                id: 'gazebo',
+                name: 'Gazebo Pesta Bunga',
+                owner: 'Taman Kota 🌸',
+                icon: '🎪',
+                x: 600, y: 750,
+                desc: 'Gazebo merah muda tempat panggung piknik.',
+                defaultMedia: [
+                    { id: 'def6', type: 'image', url: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=600&q=80', caption: 'Pesta Piknik Bunga 🌼', date: '2026-05-18', sticker: '🌸' }
+                ]
+            },
+            'orange': {
+                id: 'orange',
+                name: 'Toko Kebun Orange Blossom',
+                owner: 'Orange Blossom 🍊',
+                icon: '🍊',
+                x: 580, y: 260,
+                desc: 'Toko hasil kebun & bunga-bunga segar.',
+                defaultMedia: []
+            },
+            'lemon': {
+                id: 'lemon',
+                name: 'Salon Cantik Lemon',
+                owner: 'Lemon Meringue 🍋',
+                icon: '🍋',
+                x: 950, y: 260,
+                desc: 'Salon gaya rambut ceria berwarna kuning lemon.',
+                defaultMedia: []
+            }
+        };
+
+        // IndexedDB Manager for robust local media storage (Photos & Videos)
+        const DB_NAME = 'BerryCityDB';
+        const DB_VERSION = 1;
+        let db;
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const database = e.target.result;
+                    if (!database.objectStoreNames.contains('media')) {
+                        database.createObjectStore('media', { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve(db);
+                };
+                request.onerror = (e) => reject(e);
+            });
         }
-      });
-      renderHousePins();
-    }
 
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-      searchQuery = e.target.value;
-      renderHousePins();
-    });
+        async function saveMediaToDB(houseId, mediaItem) {
+            if (!db) await initDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction('media', 'readwrite');
+                const store = tx.objectStore('media');
+                store.put({ ...mediaItem, houseId });
+                tx.oncomplete = () => resolve();
+                tx.onerror = (e) => reject(e);
+            });
+        }
 
-    function setupEventListeners() {
-      // Dragging viewport logic
-      viewport.addEventListener('mousedown', (e) => {
-        if (isPlacingMode) return;
-        isDragging = true;
-        startX = e.clientX - panX;
-        startY = e.clientY - panY;
-      });
+        async function getMediaFromDB(houseId) {
+            if (!db) await initDB();
+            return new Promise((resolve) => {
+                const tx = db.transaction('media', 'readonly');
+                const store = tx.objectStore('media');
+                const request = store.getAll();
+                request.onsuccess = () => {
+                    const all = request.result || [];
+                    const filtered = all.filter(item => item.houseId === houseId);
+                    const defaults = HOUSES_CONFIG[houseId]?.defaultMedia || [];
+                    resolve([...filtered, ...defaults]);
+                };
+                request.onerror = () => resolve(HOUSES_CONFIG[houseId]?.defaultMedia || []);
+            });
+        }
 
-      window.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        panX = e.clientX - startX;
-        panY = e.clientY - startY;
-        applyTransform();
-      });
+        async function deleteMediaFromDB(id) {
+            if (!db) await initDB();
+            return new Promise((resolve) => {
+                const tx = db.transaction('media', 'readwrite');
+                const store = tx.objectStore('media');
+                store.delete(id);
+                tx.oncomplete = () => resolve();
+            });
+        }
 
-      window.addEventListener('mouseup', () => {
-        isDragging = false;
-      });
+        // Web Audio Synthesizer
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playCuteSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
 
-      // Mouse Wheel Zoom
-      viewport.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
-        zoomMapAt(zoomFactor, e.clientX, e.clientY);
-      }, { passive: false });
+            if (type === 'hover') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(659.25, now);
+                gain.gain.setValueAtTime(0.02, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } else if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                osc.start(now);
+                osc.stop(now + 0.12);
+            }
+        }
 
-      // Handle Clicking Canvas in "Add House Mode"
-      mapWorld.addEventListener('click', (e) => {
-        if (!isPlacingMode) return;
-        
-        // Calculate click coords on map world
-        const rect = mapWorld.getBoundingClientRect();
-        const clickX = (e.clientX - rect.left) / scale;
-        const clickY = (e.clientY - rect.top) / scale;
+        // Map Pan & Zoom Engine
+        let scale = 1;
+        let panX = 0;
+        let panY = 0;
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
 
-        pendingCoords = { x: Math.round(clickX), y: Math.round(clickY) };
-        openAddHouseModal();
-      });
-    }
+        const mapSvg = document.getElementById('map-svg');
+        const mapContainer = document.getElementById('map-container');
 
-    function zoomMap(delta) {
-      const newScale = Math.min(Math.max(scale + delta, 0.4), 1.8);
-      scale = newScale;
-      applyTransform();
-    }
+        function updateTransform() {
+            mapSvg.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+        }
 
-    function zoomMapAt(factor, clientX, clientY) {
-      const newScale = Math.min(Math.max(scale * factor, 0.4), 1.8);
-      const viewportRect = viewport.getBoundingClientRect();
-      const mouseX = clientX - viewportRect.left;
-      const mouseY = clientY - viewportRect.top;
+        function zoom(amount, centerX = window.innerWidth / 2, centerY = window.innerHeight / 2) {
+            const newScale = Math.min(Math.max(0.6, scale + amount), 2.8);
+            if (newScale === scale) return;
 
-      panX = mouseX - (mouseX - panX) * (newScale / scale);
-      panY = mouseY - (mouseY - panY) * (newScale / scale);
-      scale = newScale;
+            panX -= (centerX - panX) * (newScale / scale - 1);
+            panY -= (centerY - panY) * (newScale / scale - 1);
+            scale = newScale;
+            updateTransform();
+        }
 
-      applyTransform();
-    }
+        mapContainer.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.house-group')) return;
+            isDragging = true;
+            startX = e.clientX - panX;
+            startY = e.clientY - panY;
+        });
 
-    function resetMapTransform() {
-      centerMapToMiddle();
-    }
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            panX = e.clientX - startX;
+            panY = e.clientY - startY;
+            updateTransform();
+        });
 
-    function openMemoryModal(houseId) {
-      selectedHouseId = houseId;
-      const house = houses.find(h => h.id === houseId);
-      if (!house) return;
+        window.addEventListener('mouseup', () => { isDragging = false; });
 
-      document.getElementById('modalTitle').innerText = house.title;
-      document.getElementById('modalIcon').innerText = house.icon || '🏠';
-      document.getElementById('modalDescription').innerText = house.description;
-      document.getElementById('modalLikesCount').innerText = `${house.likes || 0} Sukai`;
-      document.getElementById('modalCoords').innerText = `Koordinat: ${house.x}, ${house.y}`;
+        mapContainer.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            zoom(e.deltaY < 0 ? 0.15 : -0.15, e.clientX, e.clientY);
+        }, { passive: false });
 
-      // Badge Category
-      const tagEl = document.getElementById('modalTag');
-      tagEl.innerText = house.category === 'rumah' ? '🏠 Rumah' : house.category === 'cafe' ? '☕ Cafe' : '🌸 Spot';
+        document.getElementById('zoom-in-btn').addEventListener('click', () => zoom(0.25));
+        document.getElementById('zoom-out-btn').addEventListener('click', () => zoom(-0.25));
+        document.getElementById('reset-view-btn').addEventListener('click', () => {
+            scale = 1; panX = 0; panY = 0; updateTransform(); playCuteSound('click');
+        });
 
-      // Render Photo Gallery (Polaroid Style)
-      const galleryEl = document.getElementById('modalGallery');
-      galleryEl.innerHTML = '';
+        // Tooltip & House Clicks
+        const tooltip = document.getElementById('hover-tooltip');
+        let currentHouseId = null;
 
-      const images = house.images && house.images.length > 0 ? house.images : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750'];
-      
-      images.forEach((imgUrl, index) => {
-        const polaroid = document.createElement('div');
-        polaroid.className = 'snap-center shrink-0';
-        polaroid.innerHTML = `
-          <div class="polaroid-frame rounded-2xl w-56">
-            <img src="${imgUrl}" alt="Foto Kenangan" class="w-full h-40 object-cover rounded-xl" onerror="this.src='https://placehold.co/400x300/FFB7B2/FFF?text=Kenangan+Manis'">
-            <p class="text-center font-bold text-xs text-slate-600 mt-3">Kenangan #${index + 1} 💖</p>
-          </div>
-        `;
-        galleryEl.appendChild(polaroid);
-      });
+        document.querySelectorAll('.house-group').forEach(el => {
+            const houseKey = el.id.replace('house-', '');
+            const conf = HOUSES_CONFIG[houseKey];
 
-      // Video Section setup
-      const videoSection = document.getElementById('modalVideoSection');
-      const videoEl = document.getElementById('modalVideo');
-      const videoSource = document.getElementById('modalVideoSource');
+            el.addEventListener('mouseenter', (e) => {
+                playCuteSound('hover');
+                document.getElementById('tooltip-icon').textContent = conf.icon;
+                document.getElementById('tooltip-title').textContent = conf.name;
+                document.getElementById('tooltip-owner').textContent = conf.owner;
+                tooltip.classList.remove('opacity-0');
+            });
 
-      if (house.video) {
-        videoSection.classList.remove('hidden');
-        videoSource.src = house.video;
-        videoEl.load();
-      } else {
-        videoSection.classList.add('hidden');
-      }
+            el.addEventListener('mousemove', (e) => {
+                tooltip.style.left = `${e.clientX}px`;
+                tooltip.style.top = `${e.clientY - 15}px`;
+            });
 
-      // Show Modal
-      const modal = document.getElementById('memoryModal');
-      const modalCard = document.getElementById('modalCard');
-      modal.classList.remove('opacity-0', 'pointer-events-none');
-      modalCard.classList.remove('scale-90');
-      modalCard.classList.add('scale-100');
-    }
+            el.addEventListener('mouseleave', () => {
+                tooltip.classList.add('opacity-0');
+            });
 
-    function closeMemoryModal() {
-      const modal = document.getElementById('memoryModal');
-      const modalCard = document.getElementById('modalCard');
-      
-      modalCard.classList.remove('scale-100');
-      modalCard.classList.add('scale-90');
-      modal.classList.add('opacity-0', 'pointer-events-none');
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                playCuteSound('click');
+                openGallery(houseKey);
+            });
+        });
 
-      // Pause Video
-      const videoEl = document.getElementById('modalVideo');
-      if (videoEl) videoEl.pause();
-    }
+        // Gallery Modal System
+        let activeFilter = 'all';
 
-    function toggleLikeCurrentHouse() {
-      if (!selectedHouseId) return;
-      const house = houses.find(h => h.id === selectedHouseId);
-      if (house) {
-        house.likes = (house.likes || 0) + 1;
-        document.getElementById('modalLikesCount').innerText = `${house.likes} Sukai`;
-        saveHouseData();
-      }
-    }
+        async function openGallery(houseId) {
+            currentHouseId = houseId;
+            const conf = HOUSES_CONFIG[houseId];
 
-    function deleteCurrentHouse() {
-      if (!selectedHouseId) return;
-      if (confirm('Apakah kamu yakin ingin menghapus tempat kenangan ini?')) {
-        houses = houses.filter(h => h.id !== selectedHouseId);
-        saveHouseData();
-        renderHousePins();
-        closeMemoryModal();
-      }
-    }
+            document.getElementById('modal-house-icon').textContent = conf.icon;
+            document.getElementById('modal-house-name').textContent = conf.name;
+            document.getElementById('modal-house-owner').textContent = `Pemilik: ${conf.owner} • ${conf.desc}`;
+            document.getElementById('upload-card').classList.add('hidden');
 
-    function toggleAddHouseMode() {
-      isPlacingMode = true;
-      document.getElementById('placementBanner').classList.remove('hidden');
-      viewport.classList.add('placing-mode');
-    }
+            await renderGalleryGrid();
+            document.getElementById('gallery-modal').classList.remove('hidden');
+        }
 
-    function cancelAddHouseMode() {
-      isPlacingMode = false;
-      document.getElementById('placementBanner').classList.add('hidden');
-      viewport.classList.remove('placing-mode');
-    }
+        async function renderGalleryGrid() {
+            if (!currentHouseId) return;
+            let list = await getMediaFromDB(currentHouseId);
 
-    function openAddHouseModal() {
-      cancelAddHouseMode();
-      const modal = document.getElementById('addHouseModal');
-      modal.classList.remove('opacity-0', 'pointer-events-none');
-    }
+            if (activeFilter === 'photos') list = list.filter(m => m.type === 'image');
+            if (activeFilter === 'videos') list = list.filter(m => m.type === 'video');
 
-    function closeAddHouseModal() {
-      const modal = document.getElementById('addHouseModal');
-      modal.classList.add('opacity-0', 'pointer-events-none');
-      document.getElementById('addHouseForm').reset();
-    }
+            const grid = document.getElementById('gallery-grid');
+            const empty = document.getElementById('empty-state');
+            grid.innerHTML = '';
 
-    function saveNewHouse(event) {
-      event.preventDefault();
-      if (!pendingCoords) return;
+            if (list.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            } else {
+                empty.classList.add('hidden');
+            }
 
-      const title = document.getElementById('newTitle').value;
-      const category = document.getElementById('newCategory').value;
-      const icon = document.getElementById('newIcon').value;
-      const description = document.getElementById('newDescription').value;
-      const rawImages = document.getElementById('newImageUrls').value;
-      const videoUrl = document.getElementById('newVideoUrl').value;
+            list.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-3 rounded-2xl border-2 border-pink-200 shadow hover:shadow-lg transition flex flex-col justify-between relative group';
 
-      const images = rawImages ? rawImages.split(',').map(s => s.trim()) : [];
+                let mediaHtml = item.type === 'video'
+                    ? `<div class="relative w-full h-36 bg-black rounded-xl overflow-hidden cursor-pointer" onclick="openLightbox('video', '${item.url}')">
+                            <video src="${item.url}" class="w-full h-full object-cover"></video>
+                            <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                <div class="w-10 h-10 rounded-full bg-pink-500 text-white flex items-center justify-center">▶</div>
+                            </div>
+                       </div>`
+                    : `<div class="w-full h-36 bg-pink-50 rounded-xl overflow-hidden cursor-pointer" onclick="openLightbox('image', '${item.url}')">
+                            <img src="${item.url}" class="w-full h-full object-cover transition transform group-hover:scale-105"/>
+                       </div>`;
 
-      const newHouse = {
-        id: 'house-' + Date.now(),
-        title,
-        category,
-        icon,
-        x: pendingCoords.x,
-        y: pendingCoords.y,
-        description,
-        images,
-        video: videoUrl || null,
-        likes: 1
-      };
+                card.innerHTML = `
+                    <div class="relative">
+                        ${mediaHtml}
+                        <span class="absolute top-2 right-2 bg-white/90 text-sm p-1 rounded-full shadow">${item.sticker || '🌸'}</span>
+                    </div>
+                    <div class="mt-3 flex justify-between items-start gap-2">
+                        <div>
+                            <p class="font-fredoka text-xs text-pink-700 leading-tight">${item.caption || 'Memori'}</p>
+                            <span class="text-[10px] text-pink-400 block mt-1"><i class="fa-regular fa-calendar"></i> ${item.date || 'Hari ini'}</span>
+                        </div>
+                        ${item.id.startsWith('def') ? '' : `
+                            <button onclick="deleteMedia('${item.id}')" class="text-pink-300 hover:text-rose-500 text-xs p-1">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        `}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
 
-      houses.push(newHouse);
-      saveHouseData();
-      renderHousePins();
-      closeAddHouseModal();
-      openMemoryModal(newHouse.id);
-    }
-  </script>
+        async function deleteMedia(id) {
+            await deleteMediaFromDB(id);
+            renderGalleryGrid();
+        }
+
+        // Upload Form Logic
+        document.getElementById('toggle-upload-btn').addEventListener('click', () => {
+            document.getElementById('upload-card').classList.toggle('hidden');
+        });
+
+        document.getElementById('media-file-input').addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                document.getElementById('file-chosen-text').textContent = this.files[0].name;
+            }
+        });
+
+        document.getElementById('upload-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('media-file-input');
+            const captionInput = document.getElementById('media-caption-input');
+            const stickerInput = document.getElementById('media-sticker-input');
+
+            if (!fileInput.files || !fileInput.files[0]) return;
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = async function(evt) {
+                const isVideo = file.type.startsWith('video/');
+                const newItem = {
+                    id: 'usr_' + Date.now(),
+                    type: isVideo ? 'video' : 'image',
+                    url: evt.target.result,
+                    caption: captionInput.value || (isVideo ? 'Video Kenangan 🎥' : 'Foto Kenangan 🌸'),
+                    sticker: stickerInput.value,
+                    date: new Date().toISOString().split('T')[0]
+                };
+
+                await saveMediaToDB(currentHouseId, newItem);
+                fileInput.value = ''; captionInput.value = '';
+                document.getElementById('upload-card').classList.add('hidden');
+                renderGalleryGrid();
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+        function openLightbox(type, url) {
+            const modal = document.getElementById('lightbox-modal');
+            const body = document.getElementById('lightbox-body');
+            body.innerHTML = type === 'video'
+                ? `<video src="${url}" controls autoplay class="max-w-full max-h-[80vh] rounded-2xl"></video>`
+                : `<img src="${url}" class="max-w-full max-h-[80vh] object-contain rounded-2xl border-4 border-pink-300"/>`;
+            modal.classList.remove('hidden');
+        }
+
+        // Particle Canvas Animation
+        const pCanvas = document.getElementById('particle-canvas');
+        const pCtx = pCanvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            pCanvas.width = window.innerWidth;
+            pCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        for (let i = 0; i < 35; i++) {
+            particles.push({
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                size: 4 + Math.random() * 6,
+                speedY: 0.3 + Math.random() * 0.7,
+                speedX: Math.sin(Math.random() * Math.PI) * 0.5,
+                color: ['#f43f5e', '#fb7185', '#fbcfe8', '#facc15'][Math.floor(Math.random() * 4)]
+            });
+        }
+
+        function animateParticles() {
+            pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+            particles.forEach(p => {
+                p.y += p.speedY;
+                p.x += p.speedX;
+                if (p.y > window.innerHeight) {
+                    p.y = -10;
+                    p.x = Math.random() * window.innerWidth;
+                }
+                pCtx.fillStyle = p.color;
+                pCtx.beginPath();
+                pCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                pCtx.fill();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // Music & Info Modals
+        let bgmPlaying = false;
+        let bgmTimer;
+        document.getElementById('bgm-btn').addEventListener('click', () => {
+            const btnText = document.getElementById('bgm-text');
+            if (!bgmPlaying) {
+                bgmPlaying = true;
+                btnText.textContent = 'Musik: On 🎶';
+                const notes = [261.63, 329.63, 392.00, 523.25, 440.00];
+                let idx = 0;
+                bgmTimer = setInterval(() => {
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.frequency.setValueAtTime(notes[idx % notes.length], audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.8);
+                    idx++;
+                }, 600);
+            } else {
+                bgmPlaying = false;
+                btnText.textContent = 'Musik: Off';
+                clearInterval(bgmTimer);
+            }
+        });
+
+        document.getElementById('close-gallery').addEventListener('click', () => {
+            document.getElementById('gallery-modal').classList.add('hidden');
+        });
+        document.getElementById('close-lightbox').addEventListener('click', () => {
+            document.getElementById('lightbox-modal').classList.add('hidden');
+        });
+        document.getElementById('info-btn').addEventListener('click', () => {
+            document.getElementById('info-modal').classList.remove('hidden');
+        });
+        document.querySelectorAll('.close-info').forEach(b => b.addEventListener('click', () => {
+            document.getElementById('info-modal').classList.add('hidden');
+        }));
+
+        // Filter Tabs
+        document.getElementById('tab-all').addEventListener('click', function() { activeFilter = 'all'; updateTabs(this); renderGalleryGrid(); });
+        document.getElementById('tab-photos').addEventListener('click', function() { activeFilter = 'photos'; updateTabs(this); renderGalleryGrid(); });
+        document.getElementById('tab-videos').addEventListener('click', function() { activeFilter = 'videos'; updateTabs(this); renderGalleryGrid(); });
+
+        function updateTabs(btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.className = 'tab-btn px-4 py-1.5 rounded-full font-fredoka text-xs bg-white text-pink-600 hover:bg-pink-100');
+            btn.className = 'tab-btn px-4 py-1.5 rounded-full font-fredoka text-xs bg-pink-500 text-white shadow';
+        }
+
+        initDB();
+    </script>
 </body>
 </html>
