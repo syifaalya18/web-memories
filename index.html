@@ -3,38 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Berry Bitty City - Ultra Detailed 3D Fruit Houses</title>
+    <title>Berry Bitty City - 3D Fruit Map</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Three.js, OrbitControls, GSAP -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <!-- FontAwesome Icons & Google Fonts -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        body { font-family: 'Nunito', sans-serif; background-color: #fdf2f8; margin: 0; overflow: hidden; user-select: none; }
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #fdf2f8;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+
         .font-fredoka { font-family: 'Fredoka', cursive; }
+
+        /* Glassmorphism styling */
         .glass-panel {
             background: rgba(255, 255, 255, 0.88);
             backdrop-filter: blur(12px);
             border: 2px solid #fbcfe8;
-            box-shadow: 0 10px 25px -5px rgba(244, 63, 94, 0.2);
+            box-shadow: 0 10px 25px -5px rgba(244, 63, 94, 0.18), 0 8px 10px -6px rgba(244, 63, 94, 0.1);
         }
+
         .glass-button {
             background: linear-gradient(135deg, #ffffff 0%, #fff1f2 100%);
             border: 2px solid #f43f5e;
             box-shadow: 0 4px 0 #fda4af;
             transition: all 0.15s ease;
         }
-        .glass-button:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #fda4af; background: #ffffff; }
-        .glass-button:active { transform: translateY(2px); box-shadow: 0 1px 0 #fda4af; }
+        .glass-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #fda4af;
+            background: #ffffff;
+        }
+        .glass-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #fda4af;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #ffe4e6; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #f43f5e; border-radius: 10px; }
     </style>
 </head>
 <body class="w-screen h-screen m-0 p-0 overflow-hidden text-pink-900 relative">
 
+    <!-- WebGL Canvas for Three.js -->
     <div id="canvas-container" class="w-full h-full absolute inset-0 z-0"></div>
 
     <!-- UI Overlay Header -->
@@ -43,18 +67,20 @@
             <span class="text-3xl animate-bounce">🍓</span>
             <div>
                 <h1 class="font-fredoka text-xl md:text-2xl text-pink-600 tracking-wide leading-tight flex items-center gap-2">
-                    Berry Bitty City <span class="text-xs bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full border border-pink-300">Ultra Detailed 3D</span>
+                    Berry Bitty City <span class="text-xs bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full border border-pink-300">12 Fruit Houses</span>
                 </h1>
-                <p class="text-xs text-pink-500 font-semibold">Dunia Stroberi & Rumah Buah Strawberry Shortcake ✨</p>
+                <p class="text-xs text-pink-500 font-semibold">Peta Buah 3D Strawberry Shortcake Style ✨</p>
             </div>
         </div>
 
+        <!-- Right Action Controls & Quick Jump -->
         <div class="flex items-center gap-2 pointer-events-auto">
             <div class="relative hidden sm:block">
                 <select id="quick-jump-select" class="glass-panel text-xs text-pink-700 font-fredoka px-4 py-2.5 rounded-2xl cursor-pointer outline-none border-2 border-pink-300">
                     <option value="">🔎 Terbang ke Rumah Buah...</option>
                 </select>
             </div>
+
             <button id="bgm-btn" class="glass-button px-4 py-2 rounded-2xl flex items-center gap-2 text-pink-600 font-fredoka text-xs md:text-sm">
                 <i class="fa-solid fa-music text-pink-500"></i>
                 <span id="bgm-text" class="hidden sm:inline">Musik: Off</span>
@@ -63,10 +89,13 @@
                 <i class="fa-solid fa-globe text-pink-500"></i>
                 <span class="hidden sm:inline">Lihat Semua</span>
             </button>
+            <button id="info-btn" class="glass-button w-10 h-10 rounded-2xl flex items-center justify-center text-pink-600 text-base">
+                <i class="fa-solid fa-circle-question"></i>
+            </button>
         </div>
     </header>
 
-    <!-- Bottom Hint -->
+    <!-- Bottom Center Hint Banner -->
     <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none w-11/12 max-w-md">
         <div class="glass-panel px-5 py-2.5 rounded-full text-center text-xs md:text-sm text-pink-700 font-bold shadow-xl flex items-center justify-center gap-2 border-2 border-pink-300">
             <span class="text-lg">🏡</span>
@@ -77,6 +106,8 @@
     <!-- Gallery Modal System -->
     <div id="gallery-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-pink-950/50 backdrop-blur-md hidden transition-all p-3 md:p-6">
         <div class="glass-panel w-full max-w-4xl max-h-[90vh] rounded-3xl flex flex-col overflow-hidden border-4 border-pink-300 shadow-2xl relative">
+            
+            <!-- Modal Header -->
             <div id="modal-header-bg" class="p-4 md:p-5 bg-gradient-to-r from-pink-200 via-rose-100 to-pink-200 border-b border-pink-300 flex justify-between items-center">
                 <div class="flex items-center gap-3">
                     <div id="modal-house-icon" class="text-3xl md:text-4xl bg-white p-2 rounded-2xl shadow-sm border border-pink-200">🍓</div>
@@ -85,24 +116,31 @@
                         <p id="modal-house-owner" class="text-xs font-bold text-pink-500">Pemilik Karakter</p>
                     </div>
                 </div>
-                <button id="close-gallery" class="w-9 h-9 rounded-full bg-white text-pink-500 hover:bg-pink-100 flex items-center justify-center text-lg font-bold shadow transition border border-pink-200">✕</button>
+                <button id="close-gallery" class="w-9 h-9 rounded-full bg-white text-pink-500 hover:bg-pink-100 flex items-center justify-center text-lg font-bold shadow transition border border-pink-200">
+                    ✕
+                </button>
             </div>
 
+            <!-- Modal Content Body -->
             <div class="p-4 md:p-5 overflow-y-auto flex-1 space-y-4">
+                
+                <!-- Category Tabs & Add Button -->
                 <div class="flex flex-wrap justify-between items-center gap-3 bg-pink-50/90 p-3 rounded-2xl border border-pink-200">
                     <div class="flex gap-2">
                         <button id="tab-all" class="tab-btn px-4 py-1.5 rounded-full font-fredoka text-xs bg-pink-500 text-white shadow">Semua Media</button>
                         <button id="tab-photos" class="tab-btn px-4 py-1.5 rounded-full font-fredoka text-xs bg-white text-pink-600 hover:bg-pink-100">📷 Foto</button>
                         <button id="tab-videos" class="tab-btn px-4 py-1.5 rounded-full font-fredoka text-xs bg-white text-pink-600 hover:bg-pink-100">🎥 Video</button>
                     </div>
+
                     <button id="toggle-upload-btn" class="glass-button px-4 py-1.5 rounded-full font-fredoka text-xs text-pink-600 flex items-center gap-2">
                         <i class="fa-solid fa-plus"></i> Tambah Memori Baru
                     </button>
                 </div>
 
+                <!-- Media Upload Form -->
                 <div id="upload-card" class="hidden bg-white p-4 rounded-2xl border-2 border-dashed border-pink-300 space-y-3">
                     <h4 class="font-fredoka text-pink-600 text-sm flex items-center gap-2">
-                        <span>✨ Unggah Foto / Video Baru</span>
+                        <span>✨ Unggah Foto / Video Baru (Tersimpan di Perangkat)</span>
                     </h4>
                     <form id="upload-form" class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div class="col-span-1 md:col-span-1">
@@ -121,20 +159,35 @@
                                     <option value="🍋">Sticker: 🍋 Lemon</option>
                                     <option value="🍊">Sticker: 🍊 Jeruk</option>
                                     <option value="🍇">Sticker: 🍇 Anggur</option>
+                                    <option value="🌸">Sticker: 🌸 Bunga</option>
+                                    <option value="💖">Sticker: 💖 Cinta</option>
                                 </select>
-                                <button type="submit" class="flex-1 glass-button bg-pink-500 text-pink-600 font-fredoka text-xs py-2.5 rounded-xl shadow transition">Simpan Memori 💖</button>
+                                <button type="submit" class="flex-1 glass-button bg-pink-500 text-pink-600 font-fredoka text-xs py-2.5 rounded-xl shadow transition">
+                                    Simpan Memori 💖
+                                </button>
                             </div>
                         </div>
                     </form>
                 </div>
 
+                <!-- Media Grid -->
                 <div>
                     <div id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+
+                    <!-- Empty State -->
                     <div id="empty-state" class="hidden text-center py-12 bg-pink-50/50 rounded-2xl border border-pink-200">
                         <div class="text-5xl mb-2">🌸</div>
                         <p class="font-fredoka text-pink-500 text-base">Belum ada memori di rumah buah ini!</p>
+                        <p class="text-xs text-pink-400 mt-1">Klik "+ Tambah Memori Baru" untuk mengunggah foto/video.</p>
                     </div>
                 </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-3 bg-pink-100/70 border-t border-pink-200 text-center text-xs text-pink-600 font-bold flex justify-between items-center px-6">
+                <span>🎀 Berry Bitty City 12 Fruit Houses</span>
+                <span>IndexedDB Storage</span>
             </div>
         </div>
     </div>
@@ -145,9 +198,29 @@
         <div id="lightbox-body" class="max-w-4xl max-h-[85vh] flex items-center justify-center rounded-2xl overflow-hidden shadow-2xl"></div>
     </div>
 
+    <!-- Info Welcome Modal -->
+    <div id="info-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-pink-950/40 backdrop-blur-sm transition-opacity">
+        <div class="glass-panel p-6 md:p-8 rounded-3xl max-w-lg w-11/12 text-center relative border-4 border-pink-300 shadow-2xl">
+            <button class="close-info absolute top-4 right-4 text-pink-400 hover:text-pink-600 text-2xl font-bold">✕</button>
+            <div class="text-5xl mb-2">🍓🫐🍉🍍</div>
+            <h2 class="font-fredoka text-2xl md:text-3xl text-pink-600 mb-2">Berry Bitty Fruit City!</h2>
+            <p class="text-sm text-pink-700 leading-relaxed mb-5">
+                Peta 3D dengan <b>12 Rumah Buah Unik Detail Strawberry Shortcake Style</b>! Setiap rumah memiliki warna khas buahnya tersendiri dengan arsitektur detail yang identik.
+            </p>
+            <div class="text-xs text-pink-700 text-left space-y-2 mb-6 bg-pink-50/80 p-4 rounded-2xl border border-pink-200">
+                <p class="flex items-center gap-2"><span>🖱️</span> <span><b>Klik & Drag:</b> Putar sudut pandang peta 3D.</span></p>
+                <p class="flex items-center gap-2"><span>🔍</span> <span><b>Scroll / Pinch:</b> Zoom in dan zoom out.</span></p>
+                <p class="flex items-center gap-2"><span>🏡</span> <span><b>Klik Rumah:</b> Membuka galeri foto & video per buah.</span></p>
+            </div>
+            <button class="close-info glass-button px-8 py-3 rounded-full font-fredoka text-pink-600 text-base shadow-lg transition active:scale-95">
+                Mulai Jelajah 12 Rumah Buah 💕
+            </button>
+        </div>
+    </div>
+
     <script>
-        // INDEXEDDB DATABASE
-        const DB_NAME = 'BerryCityFruitDB_v2';
+        // INDEXEDDB DATABASE FOR LOCAL MEDIA STORAGE
+        const DB_NAME = 'BerryCityFruitDB';
         const DB_VERSION = 1;
         let db;
 
@@ -199,23 +272,46 @@
             });
         }
 
-        // 12 FRUIT HOUSES CONFIGURATION
+        // Web Audio Synthesizer
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playCuteSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'hover') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(587.33, now);
+                gain.gain.setValueAtTime(0.02, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                osc.start(now); osc.stop(now + 0.08);
+            } else if (type === 'click') {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+                gain.gain.setValueAtTime(0.06, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                osc.start(now); osc.stop(now + 0.12);
+            }
+        }
+
+        // 12 FRUIT HOUSES CONFIGURATION WITH DISTINCT COLOR THEMES & MATCHING STRAWBERRY SHORTCAKE ARCHITECTURE
         const FRUIT_HOUSES = {
-            'strawberry': { id: 'strawberry', name: 'Rumah Cafe Stroberi', owner: 'Strawberry Shortcake 🍓', icon: '🍓', mainColor: 0xe11d48, accentColor: 0x15803d, pos: { x: 0, z: 0 }, desc: 'Rumah Toko Stroberi 2 tingkat dengan gazebo mahkota & kafe.', defaultMedia: [{ id: 'd1', type: 'image', url: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=600&q=80', caption: 'Kue Tar Stroberi Spesial 🍰', date: '2026-05-10', sticker: '🍓' }] },
-            'raspberry': { id: 'raspberry', name: 'Butik Raspberry Dome', owner: 'Raspberry Torte 🍇', icon: '🍇', mainColor: 0xbe123c, accentColor: 0x047857, pos: { x: 45, z: -35 }, desc: 'Kubah raspberry bertekstur gelembung ceria.', defaultMedia: [] },
-            'blueberry': { id: 'blueberry', name: 'Perpustakaan Blueberry', owner: 'Blueberry Muffin 🫐', icon: '🫐', mainColor: 0x0284c7, accentColor: 0x818cf8, pos: { x: 50, z: 40 }, desc: 'Perpustakaan biru bermahkota bunga & rak buku.', defaultMedia: [] },
-            'lemon': { id: 'lemon', name: 'Salon Rambut Lemon', owner: 'Lemon Meringue 🍋', icon: '🍋', mainColor: 0xeab308, accentColor: 0x16a34a, pos: { x: 0, z: -55 }, desc: 'Atap lengkung berbentuk irisan lemon segar.', defaultMedia: [] },
-            'orange': { id: 'orange', name: 'Toko Kebun Jeruk', owner: 'Orange Blossom 🍊', icon: '🍊', mainColor: 0xea580c, accentColor: 0x15803d, pos: { x: -45, z: -35 }, desc: 'Toko jeruk beratap kubah hias irisan jeruk.', defaultMedia: [] },
-            'plum': { id: 'plum', name: 'Studio Tari Plum', owner: 'Plum Pudding 🔮', icon: '🔮', mainColor: 0x7e22ce, accentColor: 0xc084fc, pos: { x: -55, z: 0 }, desc: 'Istana balet kubah ungu anggun.', defaultMedia: [] },
-            'watermelon': { id: 'watermelon', name: 'Pondok Semangka Pantai', owner: 'Watermelon Waterpark 🍉', icon: '🍉', mainColor: 0x15803d, accentColor: 0xe11d48, pos: { x: 30, z: -70 }, desc: 'Pondok semangka dengan garis hijau segar.', defaultMedia: [] },
-            'pineapple': { id: 'pineapple', name: 'Villa Nanas Tropis', owner: 'Pineapple Penny 🍍', icon: '🍍', mainColor: 0xd97706, accentColor: 0x15803d, pos: { x: -30, z: -70 }, desc: 'Villa nanas tropis mahkota daun mahkota.', defaultMedia: [] },
-            'cherry': { id: 'cherry', name: 'Cottage Kembar Ceri', owner: 'Cherry Jam 🍒', icon: '🍒', mainColor: 0x9f1239, accentColor: 0x16a34a, pos: { x: 65, z: 0 }, desc: 'Cottage kembar berbentuk ganda ceri.', defaultMedia: [] },
-            'peach': { id: 'peach', name: 'Bungalow Persik Lembut', owner: 'Peach Blossom 🍑', icon: '🍑', mainColor: 0xf97316, accentColor: 0xfcb3b3, pos: { x: -50, z: 40 }, desc: 'Bungalow persik merah muda yang lembut.', defaultMedia: [] },
-            'grape': { id: 'grape', name: 'Rumah Pohon Anggur', owner: 'Grapevine Village 🍇', icon: '🍇', mainColor: 0x6b21a8, accentColor: 0x10b981, pos: { x: -20, z: 70 }, desc: 'Rumah anggur gelembung ungu di atas bukit.', defaultMedia: [] },
-            'apple': { id: 'apple', name: 'Manor Apel Merah', owner: 'Apple Dumplin 🍎', icon: '🍎', mainColor: 0xdc2626, accentColor: 0x15803d, pos: { x: 25, z: 70 }, desc: 'Manor apel merah ceria dengan atap cerobong.', defaultMedia: [] }
+            'strawberry': { id: 'strawberry', name: 'Rumah Toko Stroberi', owner: 'Strawberry Shortcake 🍓', icon: '🍓', color: 0xf43f5e, doorColor: 0xbe123c, pos: { x: 0, z: 0 }, desc: 'Pusat toko kue stroberi manis terlezat!', defaultMedia: [{ id: 'd1', type: 'image', url: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=600&q=80', caption: 'Kue Tar Stroberi 🍰', date: '2026-05-10', sticker: '🍓' }] },
+            'raspberry': { id: 'raspberry', name: 'Butik Raspberry Dome', owner: 'Raspberry Torte 🍇', icon: '🍇', color: 0xbe185d, doorColor: 0x831843, pos: { x: 38, z: -30 }, desc: 'Butik fasyen pita raspberry manis.', defaultMedia: [] },
+            'blueberry': { id: 'blueberry', name: 'Perpustakaan Blueberry', owner: 'Blueberry Muffin 🫐', icon: '🫐', color: 0x2563eb, doorColor: 0x1e40af, pos: { x: 42, z: 38 }, desc: 'Perpustakaan kerdik buah blueberry.', defaultMedia: [] },
+            'lemon': { id: 'lemon', name: 'Salon Rambut Lemon', owner: 'Lemon Meringue 🍋', icon: '🍋', color: 0xeab308, doorColor: 0xa16207, pos: { x: 0, z: -48 }, desc: 'Salon perawatan bernuansa kuning lemon.', defaultMedia: [] },
+            'orange': { id: 'orange', name: 'Toko Kebun Jeruk', owner: 'Orange Blossom 🍊', icon: '🍊', color: 0xf97316, doorColor: 0xc2410c, pos: { x: -38, z: -30 }, desc: 'Kebun bunga dan buah segar.', defaultMedia: [] },
+            'plum': { id: 'plum', name: 'Studio Tari Plum', owner: 'Plum Pudding 🔮', icon: '🔮', color: 0x7e22ce, doorColor: 0x581c87, pos: { x: -48, z: 0 }, desc: 'Istana balet dan musik ungu.', defaultMedia: [] },
+            'watermelon': { id: 'watermelon', name: 'Pondok Semangka Pantai', owner: 'Watermelon Waterpark 🍉', icon: '🍉', color: 0xef4444, doorColor: 0x15803d, pos: { x: 28, z: -62 }, desc: 'Pondok segar semangka cerah.', defaultMedia: [] },
+            'pineapple': { id: 'pineapple', name: 'Villa Nanas Tropis', owner: 'Pineapple Penny 🍍', icon: '🍍', color: 0xd97706, doorColor: 0x92400e, pos: { x: -28, z: -62 }, desc: 'Villa nanas tropis penuh kehangatan.', defaultMedia: [] },
+            'cherry': { id: 'cherry', name: 'Rumah Kembar Ceri', owner: 'Cherry Jam 🍒', icon: '🍒', color: 0x9f1239, doorColor: 0x4c0519, pos: { x: 52, z: 0 }, desc: 'Cottage ceri ganda nan anggun.', defaultMedia: [] },
+            'peach': { id: 'peach', name: 'Bungalow Persik Lembut', owner: 'Peach Blossom 🍑', icon: '🍑', color: 0xfb923c, doorColor: 0x9a3412, pos: { x: -42, z: 38 }, desc: 'Bungalow persik merah muda yang lembut.', defaultMedia: [] },
+            'grape': { id: 'grape', name: 'Rumah Pohon Anggur', owner: 'Grapevine Village 🍇', icon: '🍇', color: 0x9333ea, doorColor: 0x581c87, pos: { x: -18, z: 62 }, desc: 'Rumah anggur di bukit cantik.', defaultMedia: [] },
+            'apple': { id: 'apple', name: 'Manor Selai Apel Merah', owner: 'Apple Dumplin 🍎', icon: '🍎', color: 0xdc2626, doorColor: 0x7f1d1d, pos: { x: 22, z: 62 }, desc: 'Manor apel merah ceria.', defaultMedia: [] }
         };
 
-        // Populate Jump Select
+        // Populate Quick Jump Dropdown
         const select = document.getElementById('quick-jump-select');
         Object.values(FRUIT_HOUSES).forEach(h => {
             const opt = document.createElement('option');
@@ -230,7 +326,7 @@
         scene.fog = new THREE.FogExp2(0xfce7f3, 0.0035);
 
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 75, 115);
+        camera.position.set(0, 80, 120);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -240,260 +336,330 @@
         container.appendChild(renderer.domElement);
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true; controls.dampingFactor = 0.05;
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
         controls.maxPolarAngle = Math.PI / 2.05;
-        controls.minDistance = 15; controls.maxDistance = 200;
+        controls.minDistance = 15;
+        controls.maxDistance = 190;
         controls.target.set(0, 0, 0);
 
         // Lighting
-        scene.add(new THREE.AmbientLight(0xffffff, 0.75));
-        const dirLight = new THREE.DirectionalLight(0xfff1f2, 0.85);
-        dirLight.position.set(70, 120, 60);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xfff1f2, 0.95);
+        dirLight.position.set(70, 110, 60);
         dirLight.castShadow = true;
-        dirLight.shadow.mapSize.width = 2048; dirLight.shadow.mapSize.height = 2048;
-        dirLight.shadow.camera.near = 10; dirLight.shadow.camera.far = 300;
-        dirLight.shadow.camera.left = -120; dirLight.shadow.camera.right = 120;
-        dirLight.shadow.camera.top = 120; dirLight.shadow.camera.bottom = -120;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.camera.near = 10;
+        dirLight.shadow.camera.far = 280;
+        dirLight.shadow.camera.left = -120;
+        dirLight.shadow.camera.right = 120;
+        dirLight.shadow.camera.top = 120;
+        dirLight.shadow.camera.bottom = -120;
         scene.add(dirLight);
 
-        // Terrain
+        // Terrain Grass Mesh
         const terrainGeo = new THREE.PlaneGeometry(260, 260, 64, 64);
         terrainGeo.rotateX(-Math.PI / 2);
         const posAttr = terrainGeo.attributes.position;
         for (let i = 0; i < posAttr.count; i++) {
-            const vx = posAttr.getX(i), vz = posAttr.getZ(i);
+            const vx = posAttr.getX(i);
+            const vz = posAttr.getZ(i);
             const dist = Math.sqrt(vx * vx + vz * vz);
-            posAttr.setY(i, Math.sin(vx * 0.04) * Math.cos(vz * 0.04) * 3 + Math.sin(dist * 0.03) * 2);
+            const vy = Math.sin(vx * 0.04) * Math.cos(vz * 0.04) * 3 + Math.sin(dist * 0.03) * 2;
+            posAttr.setY(i, vy);
         }
         terrainGeo.computeVertexNormals();
-        const terrain = new THREE.Mesh(terrainGeo, new THREE.MeshStandardMaterial({ color: 0x86efac, roughness: 0.8 }));
-        terrain.receiveShadow = true; scene.add(terrain);
 
-        // Helper materials
-        const matGreenLeaf = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.4 });
-        const matPinkTrim = new THREE.MeshStandardMaterial({ color: 0xf472b6, roughness: 0.3 });
-        const matPastelYellow = new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.3 });
-        const matWhiteBlossom = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+        const terrainMat = new THREE.MeshStandardMaterial({ color: 0x86efac, roughness: 0.8, metalness: 0.1 });
+        const terrain = new THREE.Mesh(terrainGeo, terrainMat);
+        terrain.receiveShadow = true;
+        scene.add(terrain);
+
+        // Winding River
+        const riverCurve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(-110, 0.5, -75),
+            new THREE.Vector3(-45, 0.5, -35),
+            new THREE.Vector3(0, 0.5, 10),
+            new THREE.Vector3(55, 0.5, 45),
+            new THREE.Vector3(110, 0.5, 85)
+        ]);
+        const riverGeo = new THREE.TubeGeometry(riverCurve, 64, 6.5, 8, false);
+        const riverMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.85 });
+        const river = new THREE.Mesh(riverGeo, riverMat);
+        river.position.y = -0.5;
+        scene.add(river);
 
         const houseMeshes = {};
 
-        // BUILDERS FOR DISTINCT DETAILED HOUSES
-        function createStrawberryCafe(group, conf) {
-            // Main Strawberry Body
-            const mainSphereGeo = new THREE.SphereGeometry(6.5, 32, 24);
-            mainSphereGeo.scale(1, 1.15, 1);
-            const mainMat = new THREE.MeshStandardMaterial({ color: conf.mainColor, roughness: 0.35 });
-            const mainSphere = new THREE.Mesh(mainSphereGeo, mainMat);
-            mainSphere.position.y = 7.5; mainSphere.castShadow = true;
-            group.add(mainSphere);
+        /**
+         * Builds a detailed 3D Strawberry Shortcake style house inspired by the reference image.
+         * Identical structure, but unique main color per house!
+         */
+        function createDetailedStrawberryHouse(config) {
+            const group = new THREE.Group();
+            group.position.set(config.pos.x, 0, config.pos.z);
+            group.userData = { houseId: config.id };
 
-            // Seed Dimples on Strawberry
-            const seedGeo = new THREE.SphereGeometry(0.2, 8, 8);
-            const seedMat = new THREE.MeshStandardMaterial({ color: 0xfef08a });
-            for (let i = 0; i < 40; i++) {
-                const phi = Math.acos(-1 + (2 * i) / 40);
-                const theta = Math.sqrt(40 * Math.PI) * phi;
+            const mainColor = config.color;
+            const doorColor = config.doorColor;
+
+            // 1. BASE BUSH SURROUND & FOOTPATH
+            const bushGeo = new THREE.TorusGeometry(8, 1.8, 12, 24);
+            const bushMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.9 });
+            const bushRing = new THREE.Mesh(bushGeo, bushMat);
+            bushRing.rotation.x = Math.PI / 2;
+            bushRing.position.y = 0.5;
+            bushRing.scale.set(1.1, 1.1, 0.8);
+            group.add(bushRing);
+
+            // Path Stones leading to door
+            for (let i = 0; i < 4; i++) {
+                const stone = new THREE.Mesh(
+                    new THREE.CylinderGeometry(1.2 - i*0.1, 1.4 - i*0.1, 0.2, 12),
+                    new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.7 })
+                );
+                stone.position.set(0, 0.2, 8.5 + i * 1.8);
+                stone.rotation.y = Math.random() * Math.PI;
+                group.add(stone);
+            }
+
+            // 2. MAIN SPHERICAL FRUIT BODY
+            const bodyGeo = new THREE.SphereGeometry(8.5, 32, 24);
+            bodyGeo.scale(1, 1.12, 1);
+            const bodyMat = new THREE.MeshStandardMaterial({
+                color: mainColor,
+                roughness: 0.45,
+                metalness: 0.05
+            });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 8.5;
+            body.castShadow = true;
+            body.receiveShadow = true;
+            group.add(body);
+
+            // 3. NATURAL SEED DIMPLES / DOTS AROUND THE BODY
+            const seedGeo = new THREE.SphereGeometry(0.22, 8, 8);
+            seedGeo.scale(1, 1.6, 0.5);
+            const seedMat = new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.3 });
+
+            const seedCount = 45;
+            for (let i = 0; i < seedCount; i++) {
+                const phi = Math.acos(-1 + (2 * i) / seedCount);
+                const theta = Math.sqrt(seedCount * Math.PI) * phi;
+                
+                // Avoid placing seeds inside door frame area
+                if (phi > 2.2 && Math.abs(theta % (Math.PI * 2) - Math.PI) < 0.6) continue;
+
                 const seed = new THREE.Mesh(seedGeo, seedMat);
-                seed.position.setFromSphericalCoords(6.6, phi, theta);
-                seed.position.y += 7.5;
+                const r = 8.6;
+                const x = r * Math.sin(phi) * Math.cos(theta);
+                const y = 8.5 + r * 1.12 * Math.cos(phi);
+                const z = r * Math.sin(phi) * Math.sin(theta);
+
+                seed.position.set(x, y, z);
+                seed.lookAt(0, 8.5, 0);
                 group.add(seed);
             }
 
-            // Green Leaf Canopy Crown
-            for (let i = 0; i < 6; i++) {
-                const leaf = new THREE.Mesh(new THREE.ConeGeometry(2.5, 5, 5), matGreenLeaf);
-                leaf.rotation.z = 1.1;
-                leaf.rotation.y = (i * Math.PI) / 3;
-                leaf.position.set(Math.sin((i * Math.PI) / 3) * 2, 13.5, Math.cos((i * Math.PI) / 3) * 2);
-                group.add(leaf);
+            // 4. ARCHED DOORWAY WITH ENTRY FRAME
+            const doorArchGeo = new THREE.TorusGeometry(2.4, 0.5, 12, 16, Math.PI);
+            const doorArchMat = new THREE.MeshStandardMaterial({ color: 0xfbcfe8, roughness: 0.5 });
+            const doorArch = new THREE.Mesh(doorArchGeo, doorArchMat);
+            doorArch.position.set(0, 3.8, 8.1);
+            group.add(doorArch);
+
+            const doorPillarGeo = new THREE.CylinderGeometry(0.5, 0.5, 3.8, 12);
+            const leftPillar = new THREE.Mesh(doorPillarGeo, doorArchMat);
+            leftPillar.position.set(-2.4, 1.9, 8.1);
+            const rightPillar = new THREE.Mesh(doorPillarGeo, doorArchMat);
+            rightPillar.position.set(2.4, 1.9, 8.1);
+            group.add(leftPillar);
+            group.add(rightPillar);
+
+            // Inner Door Interior (Warm Light Look)
+            const doorBackGeo = new THREE.PlaneGeometry(3.8, 4.2);
+            const doorBackMat = new THREE.MeshBasicMaterial({ color: doorColor });
+            const doorBack = new THREE.Mesh(doorBackGeo, doorBackMat);
+            doorBack.position.set(0, 2.1, 8.2);
+            group.add(doorBack);
+
+            // 5. CROWN LEAVES ON TOP & CURVED STEM
+            const leafGroup = new THREE.Group();
+            leafGroup.position.set(0, 16.5, 0);
+
+            const leafMat = new THREE.MeshStandardMaterial({ color: 0x4ade80, roughness: 0.5, side: THREE.DoubleSide });
+            const leafCount = 8;
+            for (let i = 0; i < leafCount; i++) {
+                const angle = (i / leafCount) * Math.PI * 2;
+                const leafShape = new THREE.Shape();
+                leafShape.moveTo(0, 0);
+                leafShape.quadraticCurveTo(2, 2.5, 0, 5.5);
+                leafShape.quadraticCurveTo(-2, 2.5, 0, 0);
+
+                const leafExtrude = new THREE.ExtrudeGeometry(leafShape, { depth: 0.2, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.1, bevelThickness: 0.1 });
+                const leafMesh = new THREE.Mesh(leafExtrude, leafMat);
+                leafMesh.rotation.x = Math.PI / 2 + 0.3;
+                leafMesh.rotation.z = angle;
+                leafMesh.position.set(Math.sin(angle) * 0.5, 0, Math.cos(angle) * 0.5);
+                leafMesh.castShadow = true;
+                leafGroup.add(leafMesh);
             }
+            group.add(leafGroup);
 
-            // Top Crown Gazebo Pavilion
-            const pavilionGeo = new THREE.CylinderGeometry(2.5, 3, 3, 12);
-            const pavilion = new THREE.Mesh(pavilionGeo, matPinkTrim);
-            pavilion.position.y = 15.5; pavilion.castShadow = true;
-            group.add(pavilion);
+            // Top Curved Stem/Pedicel
+            const stemCurve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(0, 16.8, 0),
+                new THREE.Vector3(0.5, 18.5, 0.3),
+                new THREE.Vector3(1.8, 20.2, -0.5)
+            ]);
+            const stemGeo = new THREE.TubeGeometry(stemCurve, 16, 0.5, 8, false);
+            const stemMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.6 });
+            const stem = new THREE.Mesh(stemGeo, stemMat);
+            stem.castShadow = true;
+            group.add(stem);
 
-            const gazeboDome = new THREE.Mesh(new THREE.SphereGeometry(2.6, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), mainMat);
-            gazeboDome.position.y = 17; group.add(gazeboDome);
+            // 6. WINDOWS & BALCONIES WITH FLOWER ACCENTS
+            const windowFrameMat = new THREE.MeshStandardMaterial({ color: 0xbae6fd, roughness: 0.3 }); // Light blue frame
+            const windowHoodMat = new THREE.MeshStandardMaterial({ color: mainColor, roughness: 0.4 });
+            const balconyMat = new THREE.MeshStandardMaterial({ color: 0xfef3c7, roughness: 0.6 });
 
-            // Flower atop Gazebo
-            const flowerHead = new THREE.Mesh(new THREE.SphereGeometry(0.8, 12, 12), matPastelYellow);
-            flowerHead.position.y = 19.8; group.add(flowerHead);
+            const windowPositions = [
+                { x: 0, y: 5.5, z: 8.3, rotY: 0, scale: 1.2, isMain: true }, // Main Bottom Window
+                { x: -4.5, y: 11, z: 6.8, rotY: -0.6, scale: 0.9 },          // Upper Left Window
+                { x: 4.5, y: 11, z: 6.8, rotY: 0.6, scale: 0.9 },           // Upper Right Window
+                { x: -7.2, y: 6, z: 3.5, rotY: -1.2, scale: 0.85 },         // Side Left Window
+                { x: 7.2, y: 6, z: 3.5, rotY: 1.2, scale: 0.85 }            // Side Right Window
+            ];
 
-            // Middle Balcony & Arched Doorway
-            const balconyFloor = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.5, 0.5, 16), matPinkTrim);
-            balconyFloor.position.set(0, 5, 3.5); group.add(balconyFloor);
+            windowPositions.forEach((wp) => {
+                const winGroup = new THREE.Group();
+                winGroup.position.set(wp.x, wp.y, wp.z);
+                winGroup.rotation.y = wp.rotY;
+                winGroup.scale.set(wp.scale, wp.scale, wp.scale);
 
-            const railing = new THREE.Mesh(new THREE.TorusGeometry(3.8, 0.15, 8, 24, Math.PI), matGreenLeaf);
-            railing.position.set(0, 6.2, 3.5); railing.rotation.x = Math.PI / 2; group.add(railing);
+                // Frame
+                const frameGeo = new THREE.CylinderGeometry(1.6, 1.6, 0.3, 16);
+                frameGeo.rotateX(Math.PI / 2);
+                const frame = new THREE.Mesh(frameGeo, windowFrameMat);
+                winGroup.add(frame);
 
-            // Berry Lantern Posts Left & Right
-            [-5.5, 5.5].forEach(x => {
-                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 7), matPinkTrim);
-                pole.position.set(x, 3.5, 5); group.add(pole);
-                const lantern = new THREE.Mesh(new THREE.SphereGeometry(0.8, 12, 12), new THREE.MeshStandardMaterial({ color: 0xa855f7 }));
-                lantern.position.set(x, 7, 5); group.add(lantern);
-            });
+                // Window Glass / Curtain
+                const glassGeo = new THREE.CircleGeometry(1.4, 16);
+                const glassMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe });
+                const glass = new THREE.Mesh(glassGeo, glassMat);
+                glass.position.z = 0.16;
+                winGroup.add(glass);
 
-            // Side Kiosks & Outdoor Cafe Table
-            const kiosk = new THREE.Mesh(new THREE.CylinderGeometry(2, 2.2, 2.5, 8), matPastelYellow);
-            kiosk.position.set(-8, 1.25, 2); group.add(kiosk);
-            const kioskRoof = new THREE.Mesh(new THREE.ConeGeometry(2.6, 1.5, 8), matGreenLeaf);
-            kioskRoof.position.set(-8, 3, 2); group.add(kioskRoof);
+                // Strawberry Top Hood
+                const hoodGeo = new THREE.ConeGeometry(2.0, 1.0, 12, 1, false, 0, Math.PI);
+                const hood = new THREE.Mesh(hoodGeo, windowHoodMat);
+                hood.rotation.z = Math.PI;
+                hood.position.set(0, 1.4, 0.2);
+                winGroup.add(hood);
 
-            // Outdoor Table
-            const table = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 0.2, 1.2, 12), matWhiteBlossom);
-            table.position.set(4, 0.6, 6); group.add(table);
-        }
+                // Add Balcony for upper windows
+                if (!wp.isMain && wp.y > 8) {
+                    const balconyGeo = new THREE.CylinderGeometry(1.8, 1.6, 0.8, 12, 1, false, 0, Math.PI);
+                    const balcony = new THREE.Mesh(balconyGeo, balconyMat);
+                    balcony.position.set(0, -1.2, 0.6);
+                    balcony.rotation.y = Math.PI / 2;
+                    winGroup.add(balcony);
 
-        function createBlueberryLibrary(group, conf) {
-            // Main Blue Dome
-            const dome = new THREE.Mesh(new THREE.SphereGeometry(6, 24, 20), new THREE.MeshStandardMaterial({ color: conf.mainColor, roughness: 0.2 }));
-            dome.position.y = 7; group.add(dome);
-
-            // White/Green Striped Awning Canopy
-            const awning = new THREE.Mesh(new THREE.CylinderGeometry(6.8, 7.2, 1.2, 16, 1, true, 0, Math.PI), new THREE.MeshStandardMaterial({ color: 0x38bdf8 }));
-            awning.position.set(0, 4.5, 0.5); awning.rotation.y = -Math.PI / 2; group.add(awning);
-
-            // Bookcase Front Shelf
-            const shelf = new THREE.Mesh(new THREE.BoxGeometry(2.5, 3.5, 1), new THREE.MeshStandardMaterial({ color: 0x93c5fd }));
-            shelf.position.set(3.5, 2, 4.5); group.add(shelf);
-            // Books
-            for (let i = -0.8; i <= 0.8; i += 0.4) {
-                const book = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.2, 0.6), new THREE.MeshStandardMaterial({ color: Math.random() > 0.5 ? 0xec4899 : 0xfde047 }));
-                book.position.set(3.5 + i, 2.2, 4.5); group.add(book);
-            }
-
-            // Top Flower Crown
-            const crown = new THREE.Mesh(new THREE.SphereGeometry(1.5, 12, 12), matWhiteBlossom);
-            crown.position.y = 13.5; group.add(crown);
-        }
-
-        function createOrangeStore(group, conf) {
-            // Orange Dome Roof
-            const roof = new THREE.Mesh(new THREE.SphereGeometry(6.2, 24, 18), new THREE.MeshStandardMaterial({ color: conf.mainColor, roughness: 0.4 }));
-            roof.position.y = 7.5; group.add(roof);
-
-            // Orange Slice Crown atop roof
-            const sliceGeo = new THREE.CylinderGeometry(2, 2, 0.4, 16);
-            const slice = new THREE.Mesh(sliceGeo, new THREE.MeshStandardMaterial({ color: 0xf97316 }));
-            slice.rotation.x = Math.PI / 2; slice.position.y = 14; group.add(slice);
-
-            // Front Fruit Display Crate Boxes
-            [-3, 0, 3].forEach(x => {
-                const crate = new THREE.Mesh(new THREE.BoxGeometry(2, 1.2, 1.5), new THREE.MeshStandardMaterial({ color: 0x15803d }));
-                crate.position.set(x, 0.6, 5.5); group.add(crate);
-                // Oranges in crate
-                for (let k = -0.5; k <= 0.5; k += 0.5) {
-                    const org = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 8), new THREE.MeshStandardMaterial({ color: 0xf97316 }));
-                    org.position.set(x + k, 1.3, 5.5); group.add(org);
+                    // Tiny White Flowers on Balcony
+                    for (let f = -1; f <= 1; f += 1) {
+                        const flower = new THREE.Mesh(
+                            new THREE.SphereGeometry(0.25, 8, 8),
+                            new THREE.MeshBasicMaterial({ color: 0xffffff })
+                        );
+                        flower.position.set(f * 0.8, -0.8, 1.8);
+                        winGroup.add(flower);
+                    }
                 }
+
+                group.add(winGroup);
             });
 
-            // Red Stairs
-            const stairs = new THREE.Mesh(new THREE.BoxGeometry(3, 0.8, 2), new THREE.MeshStandardMaterial({ color: 0xb91c1c }));
-            stairs.position.set(0, 0.4, 4); group.add(stairs);
-        }
+            // 7. WINDING DECORATIVE VINES WITH WHITE FLOWERS
+            const vineCurve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(-6, 4, 6),
+                new THREE.Vector3(-3, 8, 7.8),
+                new THREE.Vector3(0, 10, 8.2),
+                new THREE.Vector3(3, 8.5, 7.8),
+                new THREE.Vector3(6, 5, 5.5)
+            ]);
+            const vineGeo = new THREE.TubeGeometry(vineCurve, 32, 0.18, 8, false);
+            const vineMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.6 });
+            const vine = new THREE.Mesh(vineGeo, vineMat);
+            group.add(vine);
 
-        function createLemonSalon(group, conf) {
-            // Arch Lemon Slice Curved Roof
-            const lemonRoofGeo = new THREE.Toroid ? new THREE.TorusGeometry(6, 2.5, 12, 24, Math.PI) : new THREE.SphereGeometry(6.5, 24, 16);
-            const lemonMat = new THREE.MeshStandardMaterial({ color: conf.mainColor, roughness: 0.3 });
-            const lemonRoof = new THREE.Mesh(lemonRoofGeo, lemonMat);
-            lemonRoof.position.y = 7; group.add(lemonRoof);
-
-            // Lemon Wheel Signboard Emblem
-            const emblem = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.3, 12), matPastelYellow);
-            emblem.rotation.x = Math.PI / 2; emblem.position.set(0, 5.5, 5); group.add(emblem);
-
-            // Purple Flowers around Base
-            for (let i = 0; i < 8; i++) {
-                const pf = new THREE.Mesh(new THREE.SphereGeometry(0.7, 8, 8), new THREE.MeshStandardMaterial({ color: 0xa855f7 }));
-                pf.position.set(Math.sin(i) * 5.5, 0.5, Math.cos(i) * 5.5); group.add(pf);
+            // Small Blossom Flowers along the vine
+            for (let i = 0; i < 7; i++) {
+                const t = i / 6;
+                const pt = vineCurve.getPoint(t);
+                const flowerPetals = new THREE.Mesh(
+                    new THREE.CircleGeometry(0.45, 5),
+                    new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
+                );
+                flowerPetals.position.set(pt.x, pt.y, pt.z + 0.2);
+                flowerPetals.lookAt(pt.x * 1.5, pt.y * 1.5, pt.z * 1.5);
+                group.add(flowerPetals);
             }
-        }
 
-        function createRaspberryHouse(group, conf) {
-            // Berry Bubble Roof
-            const cluster = new THREE.Group();
-            for (let i = 0; i < 28; i++) {
-                const bubble = new THREE.Mesh(new THREE.SphereGeometry(1.6, 12, 12), new THREE.MeshStandardMaterial({ color: conf.mainColor, roughness: 0.3 }));
-                const phi = Math.acos(-1 + (2 * i) / 28);
-                const theta = Math.sqrt(28 * Math.PI) * phi;
-                bubble.position.setFromSphericalCoords(5, phi, theta);
-                bubble.position.y += 7.5; cluster.add(bubble);
-            }
-            group.add(cluster);
-
-            // Curved Door
-            const door = new THREE.Mesh(new THREE.BoxGeometry(2, 3.5, 0.5), matPinkTrim);
-            door.position.set(0, 1.75, 4.8); group.add(door);
-        }
-
-        function createGenericFruitHouse(group, conf) {
-            // Generic Fruit Dome with Blossom & Leaves
-            const dome = new THREE.Mesh(new THREE.SphereGeometry(6, 24, 18), new THREE.MeshStandardMaterial({ color: conf.mainColor, roughness: 0.35 }));
-            dome.position.y = 7; dome.castShadow = true; group.add(dome);
-
-            const crown = new THREE.Mesh(new THREE.ConeGeometry(2.5, 2, 6), matGreenLeaf);
-            crown.position.y = 13; crown.rotation.x = Math.PI; group.add(crown);
-        }
-
-        // MASTER HOUSE BUILDER
-        function buildFruitHouse(conf) {
-            const group = new THREE.Group();
-            group.position.set(conf.pos.x, 0, conf.pos.z);
-            group.userData = { houseId: conf.id };
-
-            // Cream Wall Base Body
-            const baseGeo = new THREE.CylinderGeometry(4.8, 5.2, 4.5, 20);
-            const baseMat = new THREE.MeshStandardMaterial({ color: 0xfff7ed, roughness: 0.5 });
-            const base = new THREE.Mesh(baseGeo, baseMat);
-            base.position.y = 2.25; base.castShadow = true; base.receiveShadow = true;
-            group.add(base);
-
-            // Call specific builders
-            if (conf.id === 'strawberry') createStrawberryCafe(group, conf);
-            else if (conf.id === 'blueberry') createBlueberryLibrary(group, conf);
-            else if (conf.id === 'orange') createOrangeStore(group, conf);
-            else if (conf.id === 'lemon') createLemonSalon(group, conf);
-            else if (conf.id === 'raspberry') createRaspberryHouse(group, conf);
-            else createGenericFruitHouse(group, conf);
-
-            // Floating 3D Emoji Icon Banner
+            // 8. FLOATING FRUIT ICON MARKER
             const canvas = document.createElement('canvas');
             canvas.width = 128; canvas.height = 128;
             const ctx = canvas.getContext('2d');
-            ctx.font = '75px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(conf.icon, 64, 64);
-            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas) }));
-            sprite.position.y = 18.5; sprite.scale.set(6.5, 6.5, 1);
+            ctx.font = '80px sans-serif';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(config.icon, 64, 64);
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMat = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(spriteMat);
+            sprite.position.y = 22;
+            sprite.scale.set(6.5, 6.5, 1);
             group.add(sprite);
 
             scene.add(group);
-            houseMeshes[conf.id] = group;
+            houseMeshes[config.id] = group;
         }
 
-        Object.values(FRUIT_HOUSES).forEach(buildFruitHouse);
+        // Build all 12 Strawberry Shortcake Style Houses with unique colors
+        Object.values(FRUIT_HOUSES).forEach(createDetailedStrawberryHouse);
 
-        // Decor Giant Flowers Around Map
-        for (let i = 0; i < 25; i++) {
+        // Decor Giant Flowers around the city
+        for (let i = 0; i < 22; i++) {
             const flower = new THREE.Group();
-            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 7), matGreenLeaf);
-            stem.position.y = 3.5; flower.add(stem);
-            const head = new THREE.Mesh(new THREE.SphereGeometry(1.8, 12, 12), new THREE.MeshStandardMaterial({ color: i % 2 === 0 ? 0xf472b6 : 0xfde047 }));
-            head.position.y = 7; flower.add(head);
-            flower.position.set((Math.random() - 0.5) * 210, 0, (Math.random() - 0.5) * 210);
+            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 6), new THREE.MeshStandardMaterial({ color: 0x22c55e }));
+            stem.position.y = 3; flower.add(stem);
+            const head = new THREE.Mesh(new THREE.SphereGeometry(1.5, 12, 12), new THREE.MeshStandardMaterial({ color: 0xfde047 }));
+            head.position.y = 6; flower.add(head);
+            flower.position.set((Math.random() - 0.5) * 200, 0, (Math.random() - 0.5) * 200);
             scene.add(flower);
         }
+
+        // Floating Sparkle Particles
+        const particleGeo = new THREE.BufferGeometry();
+        const pCount = 350;
+        const pPos = new Float32Array(pCount * 3);
+        for (let i = 0; i < pCount * 3; i += 3) {
+            pPos[i] = (Math.random() - 0.5) * 220;
+            pPos[i + 1] = Math.random() * 45;
+            pPos[i + 2] = (Math.random() - 0.5) * 220;
+        }
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+        const particleMat = new THREE.PointsMaterial({ color: 0xfb7185, size: 0.9, transparent: true, opacity: 0.8 });
+        const particleSystem = new THREE.Points(particleGeo, particleMat);
+        scene.add(particleSystem);
 
         // RAYCASTING & CLICK INTERACTION
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
 
         window.addEventListener('click', (e) => {
-            if (e.target.closest('#gallery-modal') || e.target.closest('header')) return;
+            if (e.target.closest('#gallery-modal') || e.target.closest('#info-modal') || e.target.closest('header')) return;
 
             mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -503,10 +669,15 @@
 
             for (let hit of intersects) {
                 let obj = hit.object;
-                while (obj.parent && !obj.userData.houseId) obj = obj.parent;
+                while (obj.parent && !obj.userData.houseId) {
+                    obj = obj.parent;
+                }
                 if (obj.userData && obj.userData.houseId) {
                     const houseId = obj.userData.houseId;
-                    flyToHouse(houseId); openGallery(houseId); break;
+                    playCuteSound('click');
+                    flyToHouse(houseId);
+                    openGallery(houseId);
+                    break;
                 }
             }
         });
@@ -515,21 +686,39 @@
             const conf = FRUIT_HOUSES[houseId];
             if (!conf) return;
 
-            gsap.to(camera.position, { x: conf.pos.x, y: 18, z: conf.pos.z + 28, duration: 1.5, ease: "power2.inOut" });
-            gsap.to(controls.target, { x: conf.pos.x, y: 5, z: conf.pos.z, duration: 1.5, ease: "power2.inOut" });
+            gsap.to(camera.position, {
+                x: conf.pos.x,
+                y: 22,
+                z: conf.pos.z + 32,
+                duration: 1.5,
+                ease: "power2.inOut"
+            });
+            gsap.to(controls.target, {
+                x: conf.pos.x,
+                y: 8,
+                z: conf.pos.z,
+                duration: 1.5,
+                ease: "power2.inOut"
+            });
         }
 
         document.getElementById('reset-cam-btn').addEventListener('click', () => {
-            gsap.to(camera.position, { x: 0, y: 75, z: 115, duration: 1.5 });
+            playCuteSound('click');
+            gsap.to(camera.position, { x: 0, y: 80, z: 120, duration: 1.5 });
             gsap.to(controls.target, { x: 0, y: 0, z: 0, duration: 1.5 });
         });
 
         document.getElementById('quick-jump-select').addEventListener('change', (e) => {
-            if (e.target.value) { flyToHouse(e.target.value); openGallery(e.target.value); }
+            if (e.target.value) {
+                playCuteSound('click');
+                flyToHouse(e.target.value);
+                openGallery(e.target.value);
+            }
         });
 
         // GALLERY MODAL LOGIC
-        let currentHouseId = null, activeFilter = 'all';
+        let currentHouseId = null;
+        let activeFilter = 'all';
 
         async function openGallery(houseId) {
             currentHouseId = houseId;
@@ -555,8 +744,11 @@
             const empty = document.getElementById('empty-state');
             grid.innerHTML = '';
 
-            if (list.length === 0) { empty.classList.remove('hidden'); return; }
-            else empty.classList.add('hidden');
+            if (list.length === 0) {
+                empty.classList.remove('hidden'); return;
+            } else {
+                empty.classList.add('hidden');
+            }
 
             list.forEach(item => {
                 const card = document.createElement('div');
@@ -574,33 +766,52 @@
                        </div>`;
 
                 card.innerHTML = `
-                    <div class="relative">${mediaHtml}<span class="absolute top-2 right-2 bg-white/90 text-sm p-1 rounded-full shadow">${item.sticker || '🌸'}</span></div>
+                    <div class="relative">
+                        ${mediaHtml}
+                        <span class="absolute top-2 right-2 bg-white/90 text-sm p-1 rounded-full shadow">${item.sticker || '🌸'}</span>
+                    </div>
                     <div class="mt-3 flex justify-between items-start gap-2">
                         <div>
                             <p class="font-fredoka text-xs text-pink-700 leading-tight">${item.caption || 'Memori Buah'}</p>
                             <span class="text-[10px] text-pink-400 block mt-1"><i class="fa-regular fa-calendar"></i> ${item.date || 'Hari ini'}</span>
                         </div>
-                        ${item.id.startsWith('d') ? '' : `<button onclick="deleteMedia('${item.id}')" class="text-pink-300 hover:text-rose-500 text-xs p-1"><i class="fa-solid fa-trash-can"></i></button>`}
+                        ${item.id.startsWith('d') ? '' : `
+                            <button onclick="deleteMedia('${item.id}')" class="text-pink-300 hover:text-rose-500 text-xs p-1">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        `}
                     </div>
                 `;
                 grid.appendChild(card);
             });
         }
 
-        async function deleteMedia(id) { await deleteMediaFromDB(id); renderGalleryGrid(); }
+        async function deleteMedia(id) {
+            await deleteMediaFromDB(id);
+            renderGalleryGrid();
+        }
 
-        document.getElementById('toggle-upload-btn').addEventListener('click', () => { document.getElementById('upload-card').classList.toggle('hidden'); });
-        document.getElementById('media-file-input').addEventListener('change', function() { if (this.files && this.files[0]) document.getElementById('file-chosen-text').textContent = this.files[0].name; });
+        document.getElementById('toggle-upload-btn').addEventListener('click', () => {
+            document.getElementById('upload-card').classList.toggle('hidden');
+        });
+
+        document.getElementById('media-file-input').addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                document.getElementById('file-chosen-text').textContent = this.files[0].name;
+            }
+        });
 
         document.getElementById('upload-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const fileInput = document.getElementById('media-file-input');
             const captionInput = document.getElementById('media-caption-input');
             const stickerInput = document.getElementById('media-sticker-input');
+
             if (!fileInput.files || !fileInput.files[0]) return;
 
             const file = fileInput.files[0];
             const reader = new FileReader();
+
             reader.onload = async function(evt) {
                 const isVideo = file.type.startsWith('video/');
                 const newItem = {
@@ -611,11 +822,13 @@
                     sticker: stickerInput.value,
                     date: new Date().toISOString().split('T')[0]
                 };
+
                 await saveMediaToDB(currentHouseId, newItem);
                 fileInput.value = ''; captionInput.value = '';
                 document.getElementById('upload-card').classList.add('hidden');
                 renderGalleryGrid();
             };
+
             reader.readAsDataURL(file);
         });
 
@@ -628,9 +841,20 @@
             modal.classList.remove('hidden');
         }
 
-        document.getElementById('close-gallery').addEventListener('click', () => document.getElementById('gallery-modal').classList.add('hidden'));
-        document.getElementById('close-lightbox').addEventListener('click', () => document.getElementById('lightbox-modal').classList.add('hidden'));
+        document.getElementById('close-gallery').addEventListener('click', () => {
+            document.getElementById('gallery-modal').classList.add('hidden');
+        });
+        document.getElementById('close-lightbox').addEventListener('click', () => {
+            document.getElementById('lightbox-modal').classList.add('hidden');
+        });
+        document.getElementById('info-btn').addEventListener('click', () => {
+            document.getElementById('info-modal').classList.remove('hidden');
+        });
+        document.querySelectorAll('.close-info').forEach(b => b.addEventListener('click', () => {
+            document.getElementById('info-modal').classList.add('hidden');
+        }));
 
+        // Filter Tabs
         document.getElementById('tab-all').addEventListener('click', function() { activeFilter = 'all'; updateTabs(this); renderGalleryGrid(); });
         document.getElementById('tab-photos').addEventListener('click', function() { activeFilter = 'photos'; updateTabs(this); renderGalleryGrid(); });
         document.getElementById('tab-videos').addEventListener('click', function() { activeFilter = 'videos'; updateTabs(this); renderGalleryGrid(); });
@@ -641,7 +865,6 @@
         }
 
         // BGM Synthesizer
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let bgmPlaying = false, bgmTimer;
         document.getElementById('bgm-btn').addEventListener('click', () => {
             const btnText = document.getElementById('bgm-text');
@@ -657,10 +880,12 @@
                     gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
                     osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.8); idx++;
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.8);
+                    idx++;
                 }, 600);
             } else {
-                bgmPlaying = false; btnText.textContent = 'Musik: Off'; clearInterval(bgmTimer);
+                bgmPlaying = false; btnText.textContent = 'Musik: Off';
+                clearInterval(bgmTimer);
             }
         });
 
@@ -669,11 +894,11 @@
             requestAnimationFrame(animate);
             controls.update();
 
-            // Floating icon animation
+            // Animate floating icons
             Object.values(houseMeshes).forEach(group => {
                 const sprite = group.children[group.children.length - 1];
                 if (sprite && sprite.isSprite) {
-                    sprite.position.y = 18.5 + Math.sin(Date.now() * 0.003 + group.position.x) * 1.2;
+                    sprite.position.y = 22 + Math.sin(Date.now() * 0.003 + group.position.x) * 1.2;
                 }
             });
 
