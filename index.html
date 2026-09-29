@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berry Bitty City - Ultra Detailed 3D Fruit Houses</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js, OrbitControls, GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- FontAwesome Icons & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Nunito', sans-serif; background-color: #fdf2f8; margin: 0; overflow: hidden; user-select: none; }
+        .font-fredoka { font-family: 'Fredoka', cursive; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(12px);
+            border: 2px solid #fbcfe8;
+            box-shadow: 0 10px 25px -5px rgba(244, 63, 94, 0.2);
+        }
+        .glass-button {
+            background: linear-gradient(135deg, #ffffff 0%, #fff1f2 100%);
+            border: 2px solid #f43f5e;
+            box-shadow: 0 4px 0 #fda4af;
+            transition: all 0.15s ease;
+        }
+        .glass-button:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #fda4af; background: #ffffff; }
+        .glass-button:active { transform: translateY(2px); box-shadow: 0 1px 0 #fda4af; }
+    </style>
+</head>
+<body class="w-screen h-screen m-0 p-0 overflow-hidden text-pink-900 relative">
+
+    <div id="canvas-container" class="w-full h-full absolute inset-0 z-0"></div>
+
+    <!-- UI Overlay Header -->
+    <header class="absolute top-4 left-4 right-4 z-20 flex flex-wrap justify-between items-center gap-3 pointer-events-none">
+        <div class="glass-panel px-5 py-2.5 rounded-3xl flex items-center gap-3 pointer-events-auto transform transition hover:scale-105">
+            <span class="text-3xl animate-bounce">🍓</span>
+            <div>
+                <h1 class="font-fredoka text-xl md:text-2xl text-pink-600 tracking-wide leading-tight flex items-center gap-2">
+                    Berry Bitty City <span class="text-xs bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full border border-pink-300">Ultra Detailed 3D</span>
+                </h1>
+                <p class="text-xs text-pink-500 font-semibold">Dunia Stroberi & Rumah Buah Strawberry Shortcake ✨</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 pointer-events-auto">
+            <div class="relative hidden sm:block">
+                <select id="quick-jump-select" class="glass-panel text-xs text-pink-700 font-fredoka px-4 py-2.5 rounded-2xl cursor-pointer outline-none border-2 border-pink-300">
+                    <option value="">🔎 Terbang ke Rumah Buah...</option>
+                </select>
+            </div>
+            <button id="bgm-btn" class="glass-button px-4 py-2 rounded-2xl flex items-center gap-2 text-pink-600 font-fredoka text-xs md:text-sm">
+                <i class="fa-solid fa-music text-pink-500"></i>
+                <span id="bgm-text" class="hidden sm:inline">Musik: Off</span>
+            </button>
+            <button id="reset-cam-btn" class="glass-button px-4 py-2 rounded-2xl flex items-center gap-2 text-pink-600 font-fredoka text-xs md:text-sm">
+                <i class="fa-solid fa-globe text-pink-500"></i>
+                <span class="hidden sm:inline">Lihat Semua</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Bottom Hint -->
+    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none w-11/12 max-w-md">
+        <div class="glass-panel px-5 py-2.5 rounded-full text-center text-xs md:text-sm text-pink-700 font-bold shadow-xl flex items-center justify-center gap-2 border-2 border-pink-300">
+            <span class="text-lg">🏡</span>
+            <span>Klik <b>Rumah Buah</b> mana saja untuk membuka Galeri Foto & Video!</span>
+        </div>
+    </div>
+
+    <!-- Gallery Modal System -->
+    <div id="gallery-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-pink-950/50 backdrop-blur-md hidden transition-all p-3 md:p-6">
+        <div class="glass-panel w-full max-w-4xl max-h-[90vh] rounded-3xl flex flex-col overflow-hidden border-4 border-pink-300 shadow-2xl relative">
+            <div id="modal-header-bg" class="p-4 md:p-5 bg-gradient-to-r from-pink-200 via-rose-100 to-pink-200 border-b border-pink-300 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div id="modal-house-icon" class="text-3xl md:text-4xl bg-white p-2 rounded-2xl shadow-sm border border-pink-200">🍓</div>
+                    <div>
+                        <h2 id="modal-house-name" class="font-fredoka text-lg md:text-2xl text-pink-600">Rumah Buah</h2>
+                        <p id="modal-house-owner" class="text-xs font-bold text-pink-500">Pemilik Karakter</p>
+                    </div>
+                </div>
+                <button id="close-gallery" class="w-9 h-9 rounded-full bg-white text-pink-500 hover:bg-pink-100 flex items-center justify-center text-lg font-bold shadow transition border border-pink-200">✕</button>
+            </div>
+
+            <div class="p-4 md:p-5 overflow-y-auto flex-1 space-y-4">
+                <div class="flex flex-wrap justify-between items-center gap-3 bg-pink-50/90 p-3 rounded-2xl border border-pink-200">
+                    <div class="flex gap-2">
+                        <button id="tab-all" class="tab-btn px-4 py-1.5 rounded-full font-fredoka text-xs bg-pink-500 text-white shadow">Semua Media</button>
+                        <button id="tab-photos" class="tab-btn px-4 py-1.5 rounded-full font-fredoka text-xs bg-white text-pink-600 hover:bg-pink-100">📷 Foto</button>
+                        <button id="tab-videos" class="tab-btn px-4 py-1.5 rounded-full font-fredoka text-xs bg-white text-pink-600 hover:bg-pink-100">🎥 Video</button>
+                    </div>
+                    <button id="toggle-upload-btn" class="glass-button px-4 py-1.5 rounded-full font-fredoka text-xs text-pink-600 flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Tambah Memori Baru
+                    </button>
+                </div>
+
+                <div id="upload-card" class="hidden bg-white p-4 rounded-2xl border-2 border-dashed border-pink-300 space-y-3">
+                    <h4 class="font-fredoka text-pink-600 text-sm flex items-center gap-2">
+                        <span>✨ Unggah Foto / Video Baru</span>
+                    </h4>
+                    <form id="upload-form" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="col-span-1 md:col-span-1">
+                            <label class="cursor-pointer w-full h-28 bg-pink-50 hover:bg-pink-100 rounded-xl border border-pink-300 flex flex-col items-center justify-center text-pink-500 p-2 text-center transition">
+                                <i class="fa-solid fa-cloud-arrow-up text-2xl mb-1"></i>
+                                <span id="file-chosen-text" class="text-[11px] font-bold">Pilih Foto / Video</span>
+                                <input type="file" id="media-file-input" accept="image/*,video/*" class="hidden" required />
+                            </label>
+                        </div>
+                        <div class="col-span-1 md:col-span-2 flex flex-col justify-between gap-2">
+                            <input type="text" id="media-caption-input" placeholder="Tuliskan catatan manis..." class="w-full text-xs p-3 rounded-xl border border-pink-200 focus:outline-none focus:ring-2 focus:ring-pink-400">
+                            <div class="flex gap-2">
+                                <select id="media-sticker-input" class="text-xs p-2.5 rounded-xl border border-pink-200 bg-white text-pink-600">
+                                    <option value="🍓">Sticker: 🍓 Stroberi</option>
+                                    <option value="🫐">Sticker: 🫐 Blueberry</option>
+                                    <option value="🍋">Sticker: 🍋 Lemon</option>
+                                    <option value="🍊">Sticker: 🍊 Jeruk</option>
+                                    <option value="🍇">Sticker: 🍇 Anggur</option>
+                                </select>
+                                <button type="submit" class="flex-1 glass-button bg-pink-500 text-pink-600 font-fredoka text-xs py-2.5 rounded-xl shadow transition">Simpan Memori 💖</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div>
+                    <div id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+                    <div id="empty-state" class="hidden text-center py-12 bg-pink-50/50 rounded-2xl border border-pink-200">
+                        <div class="text-5xl mb-2">🌸</div>
+                        <p class="font-fredoka text-pink-500 text-base">Belum ada memori di rumah buah ini!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox Modal -->
+    <div id="lightbox-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 hidden p-4">
+        <button id="close-lightbox" class="absolute top-5 right-5 text-white hover:text-pink-300 text-3xl font-bold z-10">✕</button>
+        <div id="lightbox-body" class="max-w-4xl max-h-[85vh] flex items-center justify-center rounded-2xl overflow-hidden shadow-2xl"></div>
+    </div>
+
+    <script>
+        // INDEXEDDB DATABASE
+        const DB_NAME = 'BerryCityFruitDB_v2';
+        const DB_VERSION = 1;
+        let db;
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const database = e.target.result;
+                    if (!database.objectStoreNames.contains('media')) {
+                        database.createObjectStore('media', { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = (e) => { db = e.target.result; resolve(db); };
+                request.onerror = (e) => reject(e);
+            });
+        }
+
+        async function saveMediaToDB(houseId, mediaItem) {
+            if (!db) await initDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction('media', 'readwrite');
+                tx.objectStore('media').put({ ...mediaItem, houseId });
+                tx.oncomplete = () => resolve();
+                tx.onerror = (e) => reject(e);
+            });
+        }
+
+        async function getMediaFromDB(houseId) {
+            if (!db) await initDB();
+            return new Promise((resolve) => {
+                const tx = db.transaction('media', 'readonly');
+                const request = tx.objectStore('media').getAll();
+                request.onsuccess = () => {
+                    const all = request.result || [];
+                    const filtered = all.filter(item => item.houseId === houseId);
+                    const defaults = FRUIT_HOUSES[houseId]?.defaultMedia || [];
+                    resolve([...filtered, ...defaults]);
+                };
+                request.onerror = () => resolve(FRUIT_HOUSES[houseId]?.defaultMedia || []);
+            });
+        }
+
+        async function deleteMediaFromDB(id) {
+            if (!db) await initDB();
+            return new Promise((resolve) => {
+                const tx = db.transaction('media', 'readwrite');
+                tx.objectStore('media').delete(id);
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        // 12 FRUIT HOUSES CONFIGURATION
+        const FRUIT_HOUSES = {
+            'strawberry': { id: 'strawberry', name: 'Rumah Cafe Stroberi', owner: 'Strawberry Shortcake 🍓', icon: '🍓', mainColor: 0xe11d48, accentColor: 0x15803d, pos: { x: 0, z: 0 }, desc: 'Rumah Toko Stroberi 2 tingkat dengan gazebo mahkota & kafe.', defaultMedia: [{ id: 'd1', type: 'image', url: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=600&q=80', caption: 'Kue Tar Stroberi Spesial 🍰', date: '2026-05-10', sticker: '🍓' }] },
+            'raspberry': { id: 'raspberry', name: 'Butik Raspberry Dome', owner: 'Raspberry Torte 🍇', icon: '🍇', mainColor: 0xbe123c, accentColor: 0x047857, pos: { x: 45, z: -35 }, desc: 'Kubah raspberry bertekstur gelembung ceria.', defaultMedia: [] },
+            'blueberry': { id: 'blueberry', name: 'Perpustakaan Blueberry', owner: 'Blueberry Muffin 🫐', icon: '🫐', mainColor: 0x0284c7, accentColor: 0x818cf8, pos: { x: 50, z: 40 }, desc: 'Perpustakaan biru bermahkota bunga & rak buku.', defaultMedia: [] },
+            'lemon': { id: 'lemon', name: 'Salon Rambut Lemon', owner: 'Lemon Meringue 🍋', icon: '🍋', mainColor: 0xeab308, accentColor: 0x16a34a, pos: { x: 0, z: -55 }, desc: 'Atap lengkung berbentuk irisan lemon segar.', defaultMedia: [] },
+            'orange': { id: 'orange', name: 'Toko Kebun Jeruk', owner: 'Orange Blossom 🍊', icon: '🍊', mainColor: 0xea580c, accentColor: 0x15803d, pos: { x: -45, z: -35 }, desc: 'Toko jeruk beratap kubah hias irisan jeruk.', defaultMedia: [] },
+            'plum': { id: 'plum', name: 'Studio Tari Plum', owner: 'Plum Pudding 🔮', icon: '🔮', mainColor: 0x7e22ce, accentColor: 0xc084fc, pos: { x: -55, z: 0 }, desc: 'Istana balet kubah ungu anggun.', defaultMedia: [] },
+            'watermelon': { id: 'watermelon', name: 'Pondok Semangka Pantai', owner: 'Watermelon Waterpark 🍉', icon: '🍉', mainColor: 0x15803d, accentColor: 0xe11d48, pos: { x: 30, z: -70 }, desc: 'Pondok semangka dengan garis hijau segar.', defaultMedia: [] },
+            'pineapple': { id: 'pineapple', name: 'Villa Nanas Tropis', owner: 'Pineapple Penny 🍍', icon: '🍍', mainColor: 0xd97706, accentColor: 0x15803d, pos: { x: -30, z: -70 }, desc: 'Villa nanas tropis mahkota daun mahkota.', defaultMedia: [] },
+            'cherry': { id: 'cherry', name: 'Cottage Kembar Ceri', owner: 'Cherry Jam 🍒', icon: '🍒', mainColor: 0x9f1239, accentColor: 0x16a34a, pos: { x: 65, z: 0 }, desc: 'Cottage kembar berbentuk ganda ceri.', defaultMedia: [] },
+            'peach': { id: 'peach', name: 'Bungalow Persik Lembut', owner: 'Peach Blossom 🍑', icon: '🍑', mainColor: 0xf97316, accentColor: 0xfcb3b3, pos: { x: -50, z: 40 }, desc: 'Bungalow persik merah muda yang lembut.', defaultMedia: [] },
+            'grape': { id: 'grape', name: 'Rumah Pohon Anggur', owner: 'Grapevine Village 🍇', icon: '🍇', mainColor: 0x6b21a8, accentColor: 0x10b981, pos: { x: -20, z: 70 }, desc: 'Rumah anggur gelembung ungu di atas bukit.', defaultMedia: [] },
+            'apple': { id: 'apple', name: 'Manor Apel Merah', owner: 'Apple Dumplin 🍎', icon: '🍎', mainColor: 0xdc2626, accentColor: 0x15803d, pos: { x: 25, z: 70 }, desc: 'Manor apel merah ceria dengan atap cerobong.', defaultMedia: [] }
+        };
+
+        // Populate Jump Select
+        const select = document.getElementById('quick-jump-select');
+        Object.values(FRUIT_HOUSES).forEach(h => {
+            const opt = document.createElement('option');
+            opt.value = h.id; opt.textContent = `${h.icon} ${h.name}`;
+            select.appendChild(opt);
+        });
+
+        // THREE.JS SCENE SETUP
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xfce7f3);
+        scene.fog = new THREE.FogExp2(0xfce7f3, 0.0035);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 75, 115);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2.05;
+        controls.minDistance = 15; controls.maxDistance = 200;
+        controls.target.set(0, 0, 0);
+
+        // Lighting
+        scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+        const dirLight = new THREE.DirectionalLight(0xfff1f2, 0.85);
+        dirLight.position.set(70, 120, 60);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048; dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.camera.near = 10; dirLight.shadow.camera.far = 300;
+        dirLight.shadow.camera.left = -120; dirLight.shadow.camera.right = 120;
+        dirLight.shadow.camera.top = 120; dirLight.shadow.camera.bottom = -120;
+        scene.add(dirLight);
+
+        // Terrain
+        const terrainGeo = new THREE.PlaneGeometry(260, 260, 64, 64);
+        terrainGeo.rotateX(-Math.PI / 2);
+        const posAttr = terrainGeo.attributes.position;
+        for (let i = 0; i < posAttr.count; i++) {
+            const vx = posAttr.getX(i), vz = posAttr.getZ(i);
+            const dist = Math.sqrt(vx * vx + vz * vz);
+            posAttr.setY(i, Math.sin(vx * 0.04) * Math.cos(vz * 0.04) * 3 + Math.sin(dist * 0.03) * 2);
+        }
+        terrainGeo.computeVertexNormals();
+        const terrain = new THREE.Mesh(terrainGeo, new THREE.MeshStandardMaterial({ color: 0x86efac, roughness: 0.8 }));
+        terrain.receiveShadow = true; scene.add(terrain);
+
+        // Helper materials
+        const matGreenLeaf = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.4 });
+        const matPinkTrim = new THREE.MeshStandardMaterial({ color: 0xf472b6, roughness: 0.3 });
+        const matPastelYellow = new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.3 });
+        const matWhiteBlossom = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+
+        const houseMeshes = {};
+
+        // BUILDERS FOR DISTINCT DETAILED HOUSES
+        function createStrawberryCafe(group, conf) {
+            // Main Strawberry Body
+            const mainSphereGeo = new THREE.SphereGeometry(6.5, 32, 24);
+            mainSphereGeo.scale(1, 1.15, 1);
+            const mainMat = new THREE.MeshStandardMaterial({ color: conf.mainColor, roughness: 0.35 });
+            const mainSphere = new THREE.Mesh(mainSphereGeo, mainMat);
+            mainSphere.position.y = 7.5; mainSphere.castShadow = true;
+            group.add(mainSphere);
+
+            // Seed Dimples on Strawberry
+            const seedGeo = new THREE.SphereGeometry(0.2, 8, 8);
+            const seedMat = new THREE.MeshStandardMaterial({ color: 0xfef08a });
+            for (let i = 0; i < 40; i++) {
+                const phi = Math.acos(-1 + (2 * i) / 40);
+                const theta = Math.sqrt(40 * Math.PI) * phi;
+                const seed = new THREE.Mesh(seedGeo, seedMat);
+                seed.position.setFromSphericalCoords(6.6, phi, theta);
+                seed.position.y += 7.5;
+                group.add(seed);
+            }
+
+            // Green Leaf Canopy Crown
+            for (let i = 0; i < 6; i++) {
+                const leaf = new THREE.Mesh(new THREE.ConeGeometry(2.5, 5, 5), matGreenLeaf);
+                leaf.rotation.z = 1.1;
+                leaf.rotation.y = (i * Math.PI) / 3;
+                leaf.position.set(Math.sin((i * Math.PI) / 3) * 2, 13.5, Math.cos((i * Math.PI) / 3) * 2);
+                group.add(leaf);
+            }
+
+            // Top Crown Gazebo Pavilion
+            const pavilionGeo = new THREE.CylinderGeometry(2.5, 3, 3, 12);
+            const pavilion = new THREE.Mesh(pavilionGeo, matPinkTrim);
+            pavilion.position.y = 15.5; pavilion.castShadow = true;
+            group.add(pavilion);
+
+            const gazeboDome = new THREE.Mesh(new THREE.SphereGeometry(2.6, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), mainMat);
+            gazeboDome.position.y = 17; group.add(gazeboDome);
+
+            // Flower atop Gazebo
+            const flowerHead = new THREE.Mesh(new THREE.SphereGeometry(0.8, 12, 12), matPastelYellow);
+            flowerHead.position.y = 19.8; group.add(flowerHead);
+
+            // Middle Balcony & Arched Doorway
+            const balconyFloor = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.5, 0.5, 16), matPinkTrim);
+            balconyFloor.position.set(0, 5, 3.5); group.add(balconyFloor);
+
+            const railing = new THREE.Mesh(new THREE.TorusGeometry(3.8, 0.15, 8, 24, Math.PI), matGreenLeaf);
+            railing.position.set(0, 6.2, 3.5); railing.rotation.x = Math.PI / 2; group.add(railing);
+
+            // Berry Lantern Posts Left & Right
+            [-5.5, 5.5].forEach(x => {
+                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 7), matPinkTrim);
+                pole.position.set(x, 3.5, 5); group.add(pole);
+                const lantern = new THREE.Mesh(new THREE.SphereGeometry(0.8, 12, 12), new THREE.MeshStandardMaterial({ color: 0xa855f7 }));
+                lantern.position.set(x, 7, 5); group.add(lantern);
+            });
+
+            // Side Kiosks & Outdoor Cafe Table
+            const kiosk = new THREE.Mesh(new THREE.CylinderGeometry(2, 2.2, 2.5, 8), matPastelYellow);
+            kiosk.position.set(-8, 1.25, 2); group.add(kiosk);
+            const kioskRoof = new THREE.Mesh(new THREE.ConeGeometry(2.6, 1.5, 8), matGreenLeaf);
+            kioskRoof.position.set(-8, 3, 2); group.add(kioskRoof);
+
+            // Outdoor Table
+            const table = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 0.2, 1.2, 12), matWhiteBlossom);
+            table.position.set(4, 0.6, 6); group.add(table);
+        }
+
+        function createBlueberryLibrary(group, conf) {
+            // Main Blue Dome
+            const dome = new THREE.Mesh(new THREE.SphereGeometry(6, 24, 20), new THREE.MeshStandardMaterial({ color: conf.mainColor, roughness: 0.2 }));
+            dome.position.y = 7; group.add(dome);
+
+            // White/Green Striped Awning Canopy
+            const awning = new THREE.Mesh(new THREE.CylinderGeometry(6.8, 7.2, 1.2, 16, 1, true, 0, Math.PI), new THREE.MeshStandardMaterial({ color: 0x38bdf8 }));
+            awning.position.set(0, 4.5, 0.5); awning.rotation.y = -Math.PI / 2; group.add(awning);
+
+            // Bookcase Front Shelf
+            const shelf = new THREE.Mesh(new THREE.BoxGeometry(2.5, 3.5, 1), new THREE.MeshStandardMaterial({ color: 0x93c5fd }));
+            shelf.position.set(3.5, 2, 4.5); group.add(shelf);
+            // Books
+            for (let i = -0.8; i <= 0.8; i += 0.4) {
+                const book = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.2, 0.6), new THREE.MeshStandardMaterial({ color: Math.random() > 0.5 ? 0xec4899 : 0xfde047 }));
+                book.position.set(3.5 + i, 2.2, 4.5); group.add(book);
+            }
+
+            // Top Flower Crown
+            const crown = new THREE.Mesh(new THREE.SphereGeometry(1.5, 12, 12), matWhiteBlossom);
+            crown.position.y = 13.5; group.add(crown);
+        }
+
+        function createOrangeStore(group, conf) {
+            // Orange Dome Roof
+            const roof = new THREE.Mesh(new THREE.SphereGeometry(6.2, 24, 18), new THREE.MeshStandardMaterial({ color: conf.mainColor, roughness: 0.4 }));
+            roof.position.y = 7.5; group.add(roof);
+
+            // Orange Slice Crown atop roof
+            const sliceGeo = new THREE.CylinderGeometry(2, 2, 0.4, 16);
+            const slice = new THREE.Mesh(sliceGeo, new THREE.MeshStandardMaterial({ color: 0xf97316 }));
+            slice.rotation.x = Math.PI / 2; slice.position.y = 14; group.add(slice);
+
+            // Front Fruit Display Crate Boxes
+            [-3, 0, 3].forEach(x => {
+                const crate = new THREE.Mesh(new THREE.BoxGeometry(2, 1.2, 1.5), new THREE.MeshStandardMaterial({ color: 0x15803d }));
+                crate.position.set(x, 0.6, 5.5); group.add(crate);
+                // Oranges in crate
+                for (let k = -0.5; k <= 0.5; k += 0.5) {
+                    const org = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 8), new THREE.MeshStandardMaterial({ color: 0xf97316 }));
+                    org.position.set(x + k, 1.3, 5.5); group.add(org);
+                }
+            });
+
+            // Red Stairs
+            const stairs = new THREE.Mesh(new THREE.BoxGeometry(3, 0.8, 2), new THREE.MeshStandardMaterial({ color: 0xb91c1c }));
+            stairs.position.set(0, 0.4, 4); group.add(stairs);
+        }
+
+        function createLemonSalon(group, conf) {
+            // Arch Lemon Slice Curved Roof
+            const lemonRoofGeo = new THREE.Toroid ? new THREE.TorusGeometry(6, 2.5, 12, 24, Math.PI) : new THREE.SphereGeometry(6.5, 24, 16);
+            const lemonMat = new THREE.MeshStandardMaterial({ color: conf.mainColor, roughness: 0.3 });
+            const lemonRoof = new THREE.Mesh(lemonRoofGeo, lemonMat);
+            lemonRoof.position.y = 7; group.add(lemonRoof);
+
+            // Lemon Wheel Signboard Emblem
+            const emblem = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.3, 12), matPastelYellow);
+            emblem.rotation.x = Math.PI / 2; emblem.position.set(0, 5.5, 5); group.add(emblem);
+
+            // Purple Flowers around Base
+            for (let i = 0; i < 8; i++) {
+                const pf = new THREE.Mesh(new THREE.SphereGeometry(0.7, 8, 8), new THREE.MeshStandardMaterial({ color: 0xa855f7 }));
+                pf.position.set(Math.sin(i) * 5.5, 0.5, Math.cos(i) * 5.5); group.add(pf);
+            }
+        }
+
+        function createRaspberryHouse(group, conf) {
+            // Berry Bubble Roof
+            const cluster = new THREE.Group();
+            for (let i = 0; i < 28; i++) {
+                const bubble = new THREE.Mesh(new THREE.SphereGeometry(1.6, 12, 12), new THREE.MeshStandardMaterial({ color: conf.mainColor, roughness: 0.3 }));
+                const phi = Math.acos(-1 + (2 * i) / 28);
+                const theta = Math.sqrt(28 * Math.PI) * phi;
+                bubble.position.setFromSphericalCoords(5, phi, theta);
+                bubble.position.y += 7.5; cluster.add(bubble);
+            }
+            group.add(cluster);
+
+            // Curved Door
+            const door = new THREE.Mesh(new THREE.BoxGeometry(2, 3.5, 0.5), matPinkTrim);
+            door.position.set(0, 1.75, 4.8); group.add(door);
+        }
+
+        function createGenericFruitHouse(group, conf) {
+            // Generic Fruit Dome with Blossom & Leaves
+            const dome = new THREE.Mesh(new THREE.SphereGeometry(6, 24, 18), new THREE.MeshStandardMaterial({ color: conf.mainColor, roughness: 0.35 }));
+            dome.position.y = 7; dome.castShadow = true; group.add(dome);
+
+            const crown = new THREE.Mesh(new THREE.ConeGeometry(2.5, 2, 6), matGreenLeaf);
+            crown.position.y = 13; crown.rotation.x = Math.PI; group.add(crown);
+        }
+
+        // MASTER HOUSE BUILDER
+        function buildFruitHouse(conf) {
+            const group = new THREE.Group();
+            group.position.set(conf.pos.x, 0, conf.pos.z);
+            group.userData = { houseId: conf.id };
+
+            // Cream Wall Base Body
+            const baseGeo = new THREE.CylinderGeometry(4.8, 5.2, 4.5, 20);
+            const baseMat = new THREE.MeshStandardMaterial({ color: 0xfff7ed, roughness: 0.5 });
+            const base = new THREE.Mesh(baseGeo, baseMat);
+            base.position.y = 2.25; base.castShadow = true; base.receiveShadow = true;
+            group.add(base);
+
+            // Call specific builders
+            if (conf.id === 'strawberry') createStrawberryCafe(group, conf);
+            else if (conf.id === 'blueberry') createBlueberryLibrary(group, conf);
+            else if (conf.id === 'orange') createOrangeStore(group, conf);
+            else if (conf.id === 'lemon') createLemonSalon(group, conf);
+            else if (conf.id === 'raspberry') createRaspberryHouse(group, conf);
+            else createGenericFruitHouse(group, conf);
+
+            // Floating 3D Emoji Icon Banner
+            const canvas = document.createElement('canvas');
+            canvas.width = 128; canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.font = '75px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(conf.icon, 64, 64);
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas) }));
+            sprite.position.y = 18.5; sprite.scale.set(6.5, 6.5, 1);
+            group.add(sprite);
+
+            scene.add(group);
+            houseMeshes[conf.id] = group;
+        }
+
+        Object.values(FRUIT_HOUSES).forEach(buildFruitHouse);
+
+        // Decor Giant Flowers Around Map
+        for (let i = 0; i < 25; i++) {
+            const flower = new THREE.Group();
+            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 7), matGreenLeaf);
+            stem.position.y = 3.5; flower.add(stem);
+            const head = new THREE.Mesh(new THREE.SphereGeometry(1.8, 12, 12), new THREE.MeshStandardMaterial({ color: i % 2 === 0 ? 0xf472b6 : 0xfde047 }));
+            head.position.y = 7; flower.add(head);
+            flower.position.set((Math.random() - 0.5) * 210, 0, (Math.random() - 0.5) * 210);
+            scene.add(flower);
+        }
+
+        // RAYCASTING & CLICK INTERACTION
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        window.addEventListener('click', (e) => {
+            if (e.target.closest('#gallery-modal') || e.target.closest('header')) return;
+
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children, true);
+
+            for (let hit of intersects) {
+                let obj = hit.object;
+                while (obj.parent && !obj.userData.houseId) obj = obj.parent;
+                if (obj.userData && obj.userData.houseId) {
+                    const houseId = obj.userData.houseId;
+                    flyToHouse(houseId); openGallery(houseId); break;
+                }
+            }
+        });
+
+        function flyToHouse(houseId) {
+            const conf = FRUIT_HOUSES[houseId];
+            if (!conf) return;
+
+            gsap.to(camera.position, { x: conf.pos.x, y: 18, z: conf.pos.z + 28, duration: 1.5, ease: "power2.inOut" });
+            gsap.to(controls.target, { x: conf.pos.x, y: 5, z: conf.pos.z, duration: 1.5, ease: "power2.inOut" });
+        }
+
+        document.getElementById('reset-cam-btn').addEventListener('click', () => {
+            gsap.to(camera.position, { x: 0, y: 75, z: 115, duration: 1.5 });
+            gsap.to(controls.target, { x: 0, y: 0, z: 0, duration: 1.5 });
+        });
+
+        document.getElementById('quick-jump-select').addEventListener('change', (e) => {
+            if (e.target.value) { flyToHouse(e.target.value); openGallery(e.target.value); }
+        });
+
+        // GALLERY MODAL LOGIC
+        let currentHouseId = null, activeFilter = 'all';
+
+        async function openGallery(houseId) {
+            currentHouseId = houseId;
+            const conf = FRUIT_HOUSES[houseId];
+
+            document.getElementById('modal-house-icon').textContent = conf.icon;
+            document.getElementById('modal-house-name').textContent = conf.name;
+            document.getElementById('modal-house-owner').textContent = `Pemilik: ${conf.owner} • ${conf.desc}`;
+            document.getElementById('upload-card').classList.add('hidden');
+
+            await renderGalleryGrid();
+            document.getElementById('gallery-modal').classList.remove('hidden');
+        }
+
+        async function renderGalleryGrid() {
+            if (!currentHouseId) return;
+            let list = await getMediaFromDB(currentHouseId);
+
+            if (activeFilter === 'photos') list = list.filter(m => m.type === 'image');
+            if (activeFilter === 'videos') list = list.filter(m => m.type === 'video');
+
+            const grid = document.getElementById('gallery-grid');
+            const empty = document.getElementById('empty-state');
+            grid.innerHTML = '';
+
+            if (list.length === 0) { empty.classList.remove('hidden'); return; }
+            else empty.classList.add('hidden');
+
+            list.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-3 rounded-2xl border-2 border-pink-200 shadow hover:shadow-lg transition flex flex-col justify-between relative group';
+
+                let mediaHtml = item.type === 'video'
+                    ? `<div class="relative w-full h-36 bg-black rounded-xl overflow-hidden cursor-pointer" onclick="openLightbox('video', '${item.url}')">
+                            <video src="${item.url}" class="w-full h-full object-cover"></video>
+                            <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                <div class="w-10 h-10 rounded-full bg-pink-500 text-white flex items-center justify-center">▶</div>
+                            </div>
+                       </div>`
+                    : `<div class="w-full h-36 bg-pink-50 rounded-xl overflow-hidden cursor-pointer" onclick="openLightbox('image', '${item.url}')">
+                            <img src="${item.url}" class="w-full h-full object-cover transition transform group-hover:scale-105"/>
+                       </div>`;
+
+                card.innerHTML = `
+                    <div class="relative">${mediaHtml}<span class="absolute top-2 right-2 bg-white/90 text-sm p-1 rounded-full shadow">${item.sticker || '🌸'}</span></div>
+                    <div class="mt-3 flex justify-between items-start gap-2">
+                        <div>
+                            <p class="font-fredoka text-xs text-pink-700 leading-tight">${item.caption || 'Memori Buah'}</p>
+                            <span class="text-[10px] text-pink-400 block mt-1"><i class="fa-regular fa-calendar"></i> ${item.date || 'Hari ini'}</span>
+                        </div>
+                        ${item.id.startsWith('d') ? '' : `<button onclick="deleteMedia('${item.id}')" class="text-pink-300 hover:text-rose-500 text-xs p-1"><i class="fa-solid fa-trash-can"></i></button>`}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        async function deleteMedia(id) { await deleteMediaFromDB(id); renderGalleryGrid(); }
+
+        document.getElementById('toggle-upload-btn').addEventListener('click', () => { document.getElementById('upload-card').classList.toggle('hidden'); });
+        document.getElementById('media-file-input').addEventListener('change', function() { if (this.files && this.files[0]) document.getElementById('file-chosen-text').textContent = this.files[0].name; });
+
+        document.getElementById('upload-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('media-file-input');
+            const captionInput = document.getElementById('media-caption-input');
+            const stickerInput = document.getElementById('media-sticker-input');
+            if (!fileInput.files || !fileInput.files[0]) return;
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = async function(evt) {
+                const isVideo = file.type.startsWith('video/');
+                const newItem = {
+                    id: 'usr_' + Date.now(),
+                    type: isVideo ? 'video' : 'image',
+                    url: evt.target.result,
+                    caption: captionInput.value || (isVideo ? 'Video Buah 🎥' : 'Foto Buah 🍓'),
+                    sticker: stickerInput.value,
+                    date: new Date().toISOString().split('T')[0]
+                };
+                await saveMediaToDB(currentHouseId, newItem);
+                fileInput.value = ''; captionInput.value = '';
+                document.getElementById('upload-card').classList.add('hidden');
+                renderGalleryGrid();
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function openLightbox(type, url) {
+            const modal = document.getElementById('lightbox-modal');
+            const body = document.getElementById('lightbox-body');
+            body.innerHTML = type === 'video'
+                ? `<video src="${url}" controls autoplay class="max-w-full max-h-[80vh] rounded-2xl"></video>`
+                : `<img src="${url}" class="max-w-full max-h-[80vh] object-contain rounded-2xl border-4 border-pink-300"/>`;
+            modal.classList.remove('hidden');
+        }
+
+        document.getElementById('close-gallery').addEventListener('click', () => document.getElementById('gallery-modal').classList.add('hidden'));
+        document.getElementById('close-lightbox').addEventListener('click', () => document.getElementById('lightbox-modal').classList.add('hidden'));
+
+        document.getElementById('tab-all').addEventListener('click', function() { activeFilter = 'all'; updateTabs(this); renderGalleryGrid(); });
+        document.getElementById('tab-photos').addEventListener('click', function() { activeFilter = 'photos'; updateTabs(this); renderGalleryGrid(); });
+        document.getElementById('tab-videos').addEventListener('click', function() { activeFilter = 'videos'; updateTabs(this); renderGalleryGrid(); });
+
+        function updateTabs(btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.className = 'tab-btn px-4 py-1.5 rounded-full font-fredoka text-xs bg-white text-pink-600 hover:bg-pink-100');
+            btn.className = 'tab-btn px-4 py-1.5 rounded-full font-fredoka text-xs bg-pink-500 text-white shadow';
+        }
+
+        // BGM Synthesizer
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let bgmPlaying = false, bgmTimer;
+        document.getElementById('bgm-btn').addEventListener('click', () => {
+            const btnText = document.getElementById('bgm-text');
+            if (!bgmPlaying) {
+                bgmPlaying = true; btnText.textContent = 'Musik: On 🎶';
+                const notes = [261.63, 329.63, 392.00, 523.25, 440.00];
+                let idx = 0;
+                bgmTimer = setInterval(() => {
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.frequency.setValueAtTime(notes[idx % notes.length], audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.8); idx++;
+                }, 600);
+            } else {
+                bgmPlaying = false; btnText.textContent = 'Musik: Off'; clearInterval(bgmTimer);
+            }
+        });
+
+        // RENDER LOOP & RESIZE
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+
+            // Floating icon animation
+            Object.values(houseMeshes).forEach(group => {
+                const sprite = group.children[group.children.length - 1];
+                if (sprite && sprite.isSprite) {
+                    sprite.position.y = 18.5 + Math.sin(Date.now() * 0.003 + group.position.x) * 1.2;
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        initDB();
+        animate();
+    </script>
+</body>
+</html>
