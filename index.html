@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Web Memories - Peta Kenangan</title>
+  <title>Web Memories - Peta Kenangan Spesial</title>
 
-  <!-- 1. CSS Leaflet untuk Peta (Library Peta Gratis) -->
+  <!-- CSS Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-  <!-- 2. STYLING / CSS (Semua Tampilan Web) -->
   <style>
     * {
       box-sizing: border-box;
@@ -17,8 +16,8 @@
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #fce4ec; /* Warna latar belakang pink lembut */
+      font-family: 'Comic Sans MS', 'Chalkboard SE', 'Segoe UI', cursive, sans-serif;
+      background-color: #fce4ec;
       color: #333;
     }
 
@@ -28,7 +27,7 @@
       color: #d81b60;
     }
 
-    /* Ukuran Tampilan Peta */
+    /* Tampilan Container Peta Gambar */
     #map {
       height: 75vh;
       width: 90%;
@@ -36,116 +35,126 @@
       border-radius: 20px;
       box-shadow: 0 8px 16px rgba(0,0,0,0.15);
       border: 4px solid #f48fb1;
+      background-color: #fff0f5;
     }
 
-    /* Styling Isi Pop-up saat Rumah Diklik */
+    /* Pop-up Foto & Video */
     .popup-content {
       text-align: center;
-      max-width: 250px;
+      max-width: 240px;
     }
 
     .popup-content h3 {
       color: #ad1457;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
     .popup-content p {
-      font-size: 0.9em;
-      margin-bottom: 10px;
-      color: #666;
+      font-size: 0.85em;
+      margin-bottom: 8px;
+      color: #555;
     }
 
-    /* Styling Foto & Video di dalam Pop-up */
     .popup-media {
       width: 100%;
       max-height: 180px;
       object-fit: cover;
-      border-radius: 10px;
-      margin-top: 8px;
+      border-radius: 12px;
+      margin-top: 6px;
     }
 
-    /* Efek Animasi Membesar saat Rumah Diarahkan Kursor (Hover) */
+    /* Efek Ikon Rumah Lucu */
     .custom-house-icon {
-      transition: transform 0.2s ease-in-out;
+      transition: transform 0.2s ease;
+      filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));
     }
     .custom-house-icon:hover {
-      transform: scale(1.25);
+      transform: scale(1.3) rotate(-5deg);
     }
   </style>
 </head>
 <body>
 
-  <h1>🏡 Peta Kenangan Kita 💖</h1>
+  <h1>🏡 Our Secret Memories Map 💖</h1>
   
-  <!-- Wadah Tempat Peta Ditampilkan -->
   <div id="map"></div>
 
-  <!-- 3. SCRIPT LEAFLET JS -->
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- 4. JAVASCRIPT (Logika Peta & Marker Rumah) -->
   <script>
-    // A. INISIALISASI PETA
-    // Atur koordinat tengah peta [-6.2088, 106.8456] & level zoom (13)
-    const map = L.map('map').setView([-6.2088, 106.8456], 13); 
+    // -----------------------------------------------------------
+    // 1. SETUP PETA GAMBAR KUSTOM (NON-GPS)
+    // -----------------------------------------------------------
+    
+    // Ganti URL ini dengan link/path gambar peta buatanmu
+    const imageUrl = 'https://picsum.photos/1000/700?random=99'; 
+    
+    // Ukuran sistem koordinat piksel peta [tinggi, lebar]
+    const imageBounds = [[0, 0], [700, 1000]]; 
 
-    // Menggunakan Tampilan Peta Gratis dari OpenStreetMap
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap'
-    }).addTo(map);
+    const map = L.map('map', {
+      crs: L.CRS.Simple, // Menggunakan titik piksel sederhana (Bukan peta dunia GPS)
+      minZoom: -1,
+      maxZoom: 2
+    });
 
-    // B. IKON RUMAH LUCU
+    // Pasang gambar sebagai peta
+    L.imageOverlay(imageUrl, imageBounds).addTo(map);
+    map.fitBounds(imageBounds);
+
+    // -----------------------------------------------------------
+    // 2. IKON RUMAH LUCU
+    // -----------------------------------------------------------
     const houseIcon = L.icon({
-      iconUrl: 'https://cdn-icons-png.flaticon.com/512/619/619153.png', // Gambar rumah imut
-      iconSize: [45, 45],       // Ukuran ikon [lebar, tinggi]
-      iconAnchor: [22, 45],     // Posisi tumpuan pin di peta
-      popupAnchor: [0, -40],    // Posisi munculnya kotak pop-up
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/619/619153.png', // Ikon rumah lucu
+      iconSize: [50, 50],
+      iconAnchor: [25, 50],
+      popupAnchor: [0, -45],
       className: 'custom-house-icon'
     });
 
-    // C. DATA RUMAH KENANGAN (Koordinat, Foto, & Video)
-    // Kamu bisa ganti koordinat, deskripsi, serta file foto/video kamu di bawah ini!
+    // -----------------------------------------------------------
+    // 3. DAFTAR LOKASI RUMAH & KENANGAN
+    // [y, x] adalah posisi koordinat titik di atas gambar
+    // -----------------------------------------------------------
     const memories = [
       {
-        title: "Rumah Kenangan 1 - Cafe Favorit",
-        description: "Tempat pertama kali kita nongkrong & ngobrol lama ✨",
-        lat: -6.2088,
-        lng: 106.8456,
+        title: "Rumah Kenangan 1",
+        description: "Momen manis pas pertama kali main ke sini 💕",
+        coords: [250, 300], // [Sumbu Y (Tinggi), Sumbu X (Lebar)]
         media: [
           { type: 'image', url: 'https://picsum.photos/300/200?random=1' },
           { type: 'video', url: 'https://www.w3schools.com/html/mov_bbb.mp4' }
         ]
       },
       {
-        title: "Rumah Kenangan 2 - Tempat Jalan-jalan",
-        description: "Foto pas liburan seru bareng 🌸",
-        lat: -6.2200,
-        lng: 106.8500,
+        title: "Rumah Kenangan 2",
+        description: "Foto pas kumpul bareng 🌸",
+        coords: [450, 700], // Sesuaikan titik posisi rumah pada gambar
         media: [
           { type: 'image', url: 'https://picsum.photos/300/200?random=2' }
         ]
       }
     ];
 
-    // D. PROCESS MENAMPILKAN RUMAH & POP-UP DI PETA
+    // -----------------------------------------------------------
+    // 4. PENEMPATAN IKON RUMAH & POP-UP
+    // -----------------------------------------------------------
     memories.forEach(item => {
       let mediaHTML = '';
       
-      // Cek apakah media berupa gambar atau video
       item.media.forEach(m => {
         if (m.type === 'image') {
-          mediaHTML += `<img src="${m.url}" class="popup-media" alt="Foto Kenangan">`;
+          mediaHTML += `<img src="${m.url}" class="popup-media" alt="Foto">`;
         } else if (m.type === 'video') {
           mediaHTML += `
             <video controls class="popup-media">
               <source src="${m.url}" type="video/mp4">
-              Browser tidak mendukung video.
             </video>`;
         }
       });
 
-      // Gabungkan teks & galeri ke pop-up
       const popupContent = `
         <div class="popup-content">
           <h3>${item.title}</h3>
@@ -154,8 +163,7 @@
         </div>
       `;
 
-      // Pasang ikon rumah ke koordinat peta
-      L.marker([item.lat, item.lng], { icon: houseIcon })
+      L.marker(item.coords, { icon: houseIcon })
         .addTo(map)
         .bindPopup(popupContent);
     });
