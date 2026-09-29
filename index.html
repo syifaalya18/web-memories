@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Berry Sweet Memories - Strawberry Shortcake Map 🍓</title>
+
+  <!-- 1. Font Imut & Font Dekoratif -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Grandstander:wght@600;800&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Background Peta & Tema Strawberry Shortcake */
+    body {
+      font-family: 'Fredoka', cursive, sans-serif;
+      background: #ffecf2;
+      background-image: radial-gradient(#ffb6c1 15%, transparent 16%), radial-gradient(#ffb6c1 15%, transparent 16%);
+      background-size: 30px 30px;
+      background-position: 0 0, 15px 15px;
+      color: #7a1d36;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    /* Header Judul */
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 15px 30px;
+      border-radius: 30px;
+      border: 4px solid #ff69b4;
+      box-shadow: 0 8px 15px rgba(255, 105, 180, 0.2);
+    }
+
+    h1 {
+      font-family: 'Grandstander', cursive;
+      font-size: 2rem;
+      color: #e6005c;
+      text-shadow: 2px 2px 0px #fff;
+    }
+
+    p.subtitle {
+      font-size: 0.95rem;
+      color: #ff3385;
+      margin-top: 4px;
+    }
+
+    /* Container Peta Bergaya Kartun Strawberry Land */
+    .map-board {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      height: 580px;
+      background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 60%, #ffd3b6 100%);
+      border: 8px solid #ff69b4;
+      border-radius: 35px;
+      box-shadow: 0 12px 25px rgba(230, 0, 92, 0.25);
+      overflow: hidden;
+    }
+
+    /* Jalan Setapak Kartun Strawberry (Jalan Bunga & Pita) */
+    .path-decor {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* Ikon Rumah Strawberry */
+    .house-spot {
+      position: absolute;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 10;
+    }
+
+    .house-spot:hover {
+      transform: scale(1.18) rotate(-3deg);
+    }
+
+    .house-img {
+      width: 90px;
+      height: 90px;
+      object-fit: contain;
+      filter: drop-shadow(0 6px 8px rgba(0,0,0,0.2));
+      animation: bounce 3s infinite ease-in-out;
+    }
+
+    .house-label {
+      background: #ffffff;
+      color: #d61a5e;
+      padding: 4px 12px;
+      border-radius: 15px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: 2px solid #ff85a2;
+      margin-top: 4px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      white-space: nowrap;
+    }
+
+    /* Variasi Gerakan Melayang Rumah */
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-7px); }
+    }
+
+    /* Pop-up Modalnya (Untuk Foto & Video) */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(122, 29, 54, 0.5);
+      backdrop-filter: blur(4px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .modal-card {
+      background: #fff5f8;
+      width: 90%;
+      max-width: 450px;
+      border-radius: 25px;
+      border: 5px solid #ff69b4;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+      position: relative;
+      animation: popup 0.3s ease-out;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    @keyframes popup {
+      from { transform: scale(0.7); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: #ff4d88;
+      color: white;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+
+    .modal-card h2 {
+      color: #d61a5e;
+      margin-bottom: 5px;
+      font-size: 1.4rem;
+    }
+
+    .modal-card p {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 15px;
+    }
+
+    /* Galeri Foto & Video */
+    .media-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .media-item {
+      width: 100%;
+      border-radius: 15px;
+      border: 3px solid #ffb6c1;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      object-fit: cover;
+    }
+
+    video.media-item {
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Judul Atas -->
+  <header>
+    <h1>🍓 Strawberry Memories Map 🍰</h1>
+    <p class="subtitle">Klik rumah-rumah manis di bawah ini untuk melihat kenangan kita!</p>
+  </header>
+
+  <!-- Board Peta Strawberry -->
+  <div class="map-board">
+    
+    <!-- Dekorasi Jalan Liat/Jalan Bunga Kartun -->
+    <svg class="path-decor" viewBox="0 0 900 580">
+      <path d="M 150 120 Q 300 250 450 180 T 750 380" fill="none" stroke="#ffffff" stroke-width="12" stroke-dasharray="10 10" opacity="0.8"/>
+      <!-- Bunga-Bunga Kecil di Peta -->
+      <circle cx="280" cy="200" r="8" fill="#ffb6c1" />
+      <circle cx="580" cy="240" r="8" fill="#ffea9f" />
+      <circle cx="380" cy="420" r="8" fill="#ffb6c1" />
+    </svg>
+
+    <!-- RUMAH 1 (Atas Kiri) -->
+    <div class="house-spot" style="top: 12%; left: 10%;" onclick="openMemory(0)">
+      <img src="https://cdn-icons-png.flaticon.com/512/4150/4150538.png" class="house-img" alt="Rumah Strawberry 1">
+      <div class="house-label">🍓 Cafe Strawberry</div>
+    </div>
+
+    <!-- RUMAH 2 (Tengah) -->
+    <div class="house-spot" style="top: 25%; left: 45%;" onclick="openMemory(1)">
+      <img src="https://cdn-icons-png.flaticon.com/512/11516/11516222.png" class="house-img" alt="Rumah Kue 2">
+      <div class="house-label">🍰 Taman Kue</div>
+    </div>
+
+    <!-- RUMAH 3 (Bawah Kanan) -->
+    <div class="house-spot" style="top: 58%; left: 72%;" onclick="openMemory(2)">
+      <img src="https://cdn-icons-png.flaticon.com/512/3472/3472620.png" class="house-img" alt="Rumah Jamur 3">
+      <div class="house-label">🎀 Rumah Kenangan</div>
+    </div>
+
+  </div>
+
+  <!-- Modal Pop-up Foto & Video -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-card">
+      <button class="close-btn" onclick="closeMemory()">×</button>
+      <h2 id="modalTitle">Judul Tempat</h2>
+      <p id="modalDesc">Deskripsi kenangan manis di tempat ini...</p>
+      
+      <!-- Wadah Foto/Video -->
+      <div class="media-container" id="modalMedia"></div>
+    </div>
+  </div>
+
+  <script>
+    // -----------------------------------------------------------
+    // DATA FOTO & VIDEO PER RUMAH
+    // Silakan ganti/tambahkan foto & video kamu di bawah ini!
+    // -----------------------------------------------------------
+    const memoriesData = [
+      {
+        title: "🍓 Cafe Strawberry",
+        description: "Tempat pertama kali kita nyobain es krim strawberry bareng! 💕",
+        media: [
+          { type: 'image', url: 'https://picsum.photos/400/300?random=1' },
+          { type: 'video', url: 'https://www.w3schools.com/html/mov_bbb.mp4' }
+        ]
+      },
+      {
+        title: "🍰 Taman Kue Sweetness",
+        description: "Momen piknik pas sore hari, seru banget! ✨",
+        media: [
+          { type: 'image', url: 'https://picsum.photos/400/300?random=2' },
+          { type: 'image', url: 'https://picsum.photos/400/300?random=3' }
+        ]
+      },
+      {
+        title: "🎀 Rumah Kenangan Indah",
+        description: "Foto dan video spesial kumpul bareng teman-teman 🌸",
+        media: [
+          { type: 'video', url: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+          { type: 'image', url: 'https://picsum.photos/400/300?random=4' }
+        ]
+      }
+    ];
+
+    // Buka Pop-up
+    function openMemory(index) {
+      const data = memoriesData[index];
+      document.getElementById('modalTitle').innerText = data.title;
+      document.getElementById('modalDesc').innerText = data.description;
+
+      const mediaContainer = document.getElementById('modalMedia');
+      mediaContainer.innerHTML = ''; // Reset media lama
+
+      // Tambahkan media (Foto / Video)
+      data.media.forEach(item => {
+        if (item.type === 'image') {
+          const img = document.createElement('img');
+          img.src = item.url;
+          img.className = 'media-item';
+          mediaContainer.appendChild(img);
+        } else if (item.type === 'video') {
+          const video = document.createElement('video');
+          video.src = item.url;
+          video.controls = true;
+          video.className = 'media-item';
+          mediaContainer.appendChild(video);
+        }
+      });
+
+      document.getElementById('modalOverlay').style.display = 'flex';
+    }
+
+    // Tutup Pop-up
+    function closeMemory() {
+      document.getElementById('modalOverlay').style.display = 'none';
+      
+      // Hentikan video jika sedang diputar saat pop-up ditutup
+      const videos = document.querySelectorAll('video');
+      videos.forEach(v => v.pause());
+    }
+
+    // Tutup pop-up jika klik di luar kotak
+    window.onclick = function(event) {
+      const overlay = document.getElementById('modalOverlay');
+      if (event.target === overlay) {
+        closeMemory();
+      }
+    };
+  </script>
+</body>
+</html>
