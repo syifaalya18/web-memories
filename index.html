@@ -3,916 +3,1228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Berry Bitty City - 3D Fruit Map</title>
-    <!-- Tailwind CSS -->
+    <title>Megacomplex Berry Bitty City - Komplek Perumahan Fantasi Buah</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Three.js, OrbitControls, GSAP -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <!-- FontAwesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-
+    
     <style>
         body {
-            font-family: 'Nunito', sans-serif;
-            background-color: #fdf2f8;
-            margin: 0;
-            overflow: hidden;
+            font-family: 'Quicksand', sans-serif;
             user-select: none;
+            overflow: hidden;
+            background-color: #0d9488;
         }
 
-        .font-fredoka { font-family: 'Fredoka', cursive; }
+        .font-title {
+            font-family: 'Fredoka One', cursive;
+        }
 
-        /* Glassmorphism styling */
+        /* Map Canvas Outer Container Background */
+        .sky-day {
+            background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 40%, #a7f3d0 100%);
+        }
+
+        .sky-night {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%);
+        }
+
+        /* Canvas Pan & Drag Cursor Styles */
+        #mapContainer {
+            cursor: grab;
+        }
+        #mapContainer:active {
+            cursor: grabbing;
+        }
+
+        /* Night Mode Glow Effects */
+        .night-mode .street-lamp {
+            fill: #fef08a !important;
+            filter: drop-shadow(0 0 14px #facc15);
+        }
+
+        .night-mode .window-glow {
+            fill: #fef08a !important;
+            filter: drop-shadow(0 0 12px #facc15);
+        }
+
+        .night-mode .fountain-water {
+            filter: drop-shadow(0 0 20px #38bdf8);
+        }
+
+        /* House Hover & Animation Effects */
+        .house-card {
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease;
+        }
+
+        .house-card:hover {
+            transform: scale(1.1) translateY(-12px);
+            filter: drop-shadow(0 25px 25px rgba(0, 0, 0, 0.3));
+            z-index: 40 !important;
+        }
+
+        /* Swaying Garden Element Animation */
+        @keyframes sway {
+            0%, 100% { transform: rotate(-4deg); }
+            50% { transform: rotate(4deg); }
+        }
+
+        .swaying {
+            transform-origin: bottom center;
+            animation: sway 3s ease-in-out infinite;
+        }
+
+        /* Water Ripple & Fountain Animations */
+        @keyframes waterPulse {
+            0%, 100% { transform: scale(1); opacity: 0.85; }
+            50% { transform: scale(1.08); opacity: 0.6; }
+        }
+
+        .water-pulse {
+            animation: waterPulse 2.5s ease-in-out infinite;
+        }
+
+        /* Glassmorphism UI Panels */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.88);
-            backdrop-filter: blur(12px);
-            border: 2px solid #fbcfe8;
-            box-shadow: 0 10px 25px -5px rgba(244, 63, 94, 0.18), 0 8px 10px -6px rgba(244, 63, 94, 0.1);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(14px);
+            border: 2px solid rgba(255, 255, 255, 0.8);
         }
 
-        .glass-button {
-            background: linear-gradient(135deg, #ffffff 0%, #fff1f2 100%);
-            border: 2px solid #f43f5e;
-            box-shadow: 0 4px 0 #fda4af;
-            transition: all 0.15s ease;
-        }
-        .glass-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 0 #fda4af;
-            background: #ffffff;
-        }
-        .glass-button:active {
-            transform: translateY(2px);
-            box-shadow: 0 1px 0 #fda4af;
+        .glass-panel-dark {
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(14px);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            color: #f8fafc;
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #ffe4e6; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb { background: #f43f5e; border-radius: 10px; }
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #10b981;
+            border-radius: 10px;
+        }
     </style>
 </head>
-<body class="w-screen h-screen m-0 p-0 overflow-hidden text-pink-900 relative">
+<body class="h-screen w-screen text-slate-800 relative select-none">
 
-    <!-- WebGL Canvas for Three.js -->
-    <div id="canvas-container" class="w-full h-full absolute inset-0 z-0"></div>
-
-    <!-- UI Overlay Header -->
-    <header class="absolute top-4 left-4 right-4 z-20 flex flex-wrap justify-between items-center gap-3 pointer-events-none">
-        <div class="glass-panel px-5 py-2.5 rounded-3xl flex items-center gap-3 pointer-events-auto transform transition hover:scale-105">
-            <span class="text-3xl animate-bounce">🍓</span>
-            <div>
-                <h1 class="font-fredoka text-xl md:text-2xl text-pink-600 tracking-wide leading-tight flex items-center gap-2">
-                    Berry Bitty City <span class="text-xs bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full border border-pink-300">12 Fruit Houses</span>
-                </h1>
-                <p class="text-xs text-pink-500 font-semibold">Peta Buah 3D Strawberry Shortcake Style ✨</p>
+    <!-- Top Interactive Header & Control Bar -->
+    <header class="fixed top-0 left-0 right-0 z-40 p-3 md:p-4 pointer-events-none">
+        <div class="max-w-7xl mx-auto glass-panel rounded-3xl p-3 px-5 shadow-2xl flex flex-wrap items-center justify-between gap-3 border-2 border-white pointer-events-auto">
+            
+            <!-- Logo & Complex Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-amber-400 flex items-center justify-center text-white text-2xl shadow-inner shadow-amber-600 border-2 border-yellow-200">
+                    🍓
+                </div>
+                <div>
+                    <h1 class="font-title text-xl md:text-2xl text-emerald-800 tracking-wide leading-tight">Megacomplex Berry Bitty City</h1>
+                    <p class="text-xs font-bold text-emerald-600 flex items-center gap-2">
+                        <span>🏡 Peta Megacomplex Buah (3200×2400px)</span>
+                        <span id="houseCountBadge" class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-[10px]">13 Rumah</span>
+                    </p>
+                </div>
             </div>
-        </div>
 
-        <!-- Right Action Controls & Quick Jump -->
-        <div class="flex items-center gap-2 pointer-events-auto">
-            <div class="relative hidden sm:block">
-                <select id="quick-jump-select" class="glass-panel text-xs text-pink-700 font-fredoka px-4 py-2.5 rounded-2xl cursor-pointer outline-none border-2 border-pink-300">
-                    <option value="">🔎 Terbang ke Rumah Buah...</option>
+            <!-- Controls & Filters Bar -->
+            <div class="flex items-center gap-2 md:gap-3 flex-wrap">
+                <!-- Search Box -->
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" id="searchInput" oninput="filterHouses()" placeholder="Cari blok, rumah, atau nama..." class="pl-8 pr-3 py-1.5 rounded-full text-xs md:text-sm bg-white/90 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 w-36 md:w-52 shadow-inner font-medium">
+                </div>
+
+                <!-- Sector Filter -->
+                <select id="sectorFilter" onchange="filterHouses()" class="px-3 py-1.5 rounded-full text-xs md:text-sm bg-white/90 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-slate-700 font-semibold cursor-pointer">
+                    <option value="all">🌐 Semua Sektor</option>
+                    <option value="A">🍋 Sektor A: Lemon & Citrus Grove</option>
+                    <option value="B">🍓 Sektor B: Berry Village</option>
+                    <option value="C">🍍 Sektor C: Tropical Fruit Park</option>
+                    <option value="D">🍇 Sektor D: Sweet Orchard Ave</option>
                 </select>
-            </div>
 
-            <button id="bgm-btn" class="glass-button px-4 py-2 rounded-2xl flex items-center gap-2 text-pink-600 font-fredoka text-xs md:text-sm">
-                <i class="fa-solid fa-music text-pink-500"></i>
-                <span id="bgm-text" class="hidden sm:inline">Musik: Off</span>
-            </button>
-            <button id="reset-cam-btn" class="glass-button px-4 py-2 rounded-2xl flex items-center gap-2 text-pink-600 font-fredoka text-xs md:text-sm">
-                <i class="fa-solid fa-globe text-pink-500"></i>
-                <span class="hidden sm:inline">Lihat Semua</span>
-            </button>
-            <button id="info-btn" class="glass-button w-10 h-10 rounded-2xl flex items-center justify-center text-pink-600 text-base">
-                <i class="fa-solid fa-circle-question"></i>
-            </button>
+                <!-- Status Filter -->
+                <select id="statusFilter" onchange="filterHouses()" class="px-3 py-1.5 rounded-full text-xs md:text-sm bg-white/90 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-slate-700 font-semibold cursor-pointer">
+                    <option value="all">Semua Status</option>
+                    <option value="Terisi">🟢 Terisi</option>
+                    <option value="Dijual">🟡 Dijual</option>
+                    <option value="Dalam Pembangunan">🏗️ Pembangunan</option>
+                </select>
+
+                <!-- Day/Night Mode Switch -->
+                <button onclick="toggleDayNight()" id="dayNightBtn" class="flex items-center gap-2 px-3.5 py-1.5 bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-xs md:text-sm rounded-full shadow transition-transform active:scale-95">
+                    <i class="fa-solid fa-sun text-yellow-100" id="dayNightIcon"></i>
+                    <span id="dayNightText">Siang</span>
+                </button>
+
+                <!-- Zoom Controls -->
+                <div class="flex items-center bg-white/90 rounded-full border border-slate-200 p-0.5 shadow">
+                    <button onclick="adjustZoom(-0.15)" class="w-7 h-7 rounded-full hover:bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600"><i class="fa-solid fa-minus"></i></button>
+                    <button onclick="resetView()" class="px-2 text-xs font-bold text-slate-600 hover:text-emerald-600">Reset</button>
+                    <button onclick="adjustZoom(0.15)" class="w-7 h-7 rounded-full hover:bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600"><i class="fa-solid fa-plus"></i></button>
+                </div>
+
+                <!-- Add New Plot Button -->
+                <button onclick="openAddHouseModal()" class="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs md:text-sm rounded-full shadow transition-transform active:scale-95">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Tambah Kavling</span>
+                </button>
+            </div>
         </div>
     </header>
 
-    <!-- Bottom Center Hint Banner -->
-    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none w-11/12 max-w-md">
-        <div class="glass-panel px-5 py-2.5 rounded-full text-center text-xs md:text-sm text-pink-700 font-bold shadow-xl flex items-center justify-center gap-2 border-2 border-pink-300">
-            <span class="text-lg">🏡</span>
-            <span>Klik <b>Rumah Buah</b> mana saja untuk membuka Galeri Foto & Video!</span>
+    <!-- Main Draggable & Zoomable Map Viewport -->
+    <main class="w-full h-full relative sky-day transition-colors duration-700 overflow-hidden" id="mapViewport">
+        
+        <!-- Celestial Sun / Moon -->
+        <div id="celestialBody" class="absolute top-24 right-16 w-24 h-24 rounded-full bg-yellow-300 shadow-[0_0_60px_rgba(253,224,71,0.9)] border-4 border-yellow-200 pointer-events-none z-10 flex items-center justify-center transition-all duration-700">
+            <div class="text-3xl opacity-40">☀️</div>
         </div>
-    </div>
 
-    <!-- Gallery Modal System -->
-    <div id="gallery-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-pink-950/50 backdrop-blur-md hidden transition-all p-3 md:p-6">
-        <div class="glass-panel w-full max-w-4xl max-h-[90vh] rounded-3xl flex flex-col overflow-hidden border-4 border-pink-300 shadow-2xl relative">
+        <!-- Draggable Map Wrapper (3200px x 2400px Mega Canvas) -->
+        <div id="mapContainer" class="absolute inset-0 w-full h-full" onmousedown="startDrag(event)" onmousemove="drag(event)" onmouseup="stopDrag()" onmouseleave="stopDrag()" ontouchstart="startDragTouch(event)" ontouchmove="dragTouch(event)" ontouchend="stopDrag()">
             
-            <!-- Modal Header -->
-            <div id="modal-header-bg" class="p-4 md:p-5 bg-gradient-to-r from-pink-200 via-rose-100 to-pink-200 border-b border-pink-300 flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <div id="modal-house-icon" class="text-3xl md:text-4xl bg-white p-2 rounded-2xl shadow-sm border border-pink-200">🍓</div>
-                    <div>
-                        <h2 id="modal-house-name" class="font-fredoka text-lg md:text-2xl text-pink-600">Rumah Buah</h2>
-                        <p id="modal-house-owner" class="text-xs font-bold text-pink-500">Pemilik Karakter</p>
-                    </div>
-                </div>
-                <button id="close-gallery" class="w-9 h-9 rounded-full bg-white text-pink-500 hover:bg-pink-100 flex items-center justify-center text-lg font-bold shadow transition border border-pink-200">
-                    ✕
-                </button>
-            </div>
-
-            <!-- Modal Content Body -->
-            <div class="p-4 md:p-5 overflow-y-auto flex-1 space-y-4">
+            <div id="megaMap" class="relative origin-top-left transition-transform duration-75 ease-out" style="width: 3200px; height: 2400px; transform: translate(-800px, -600px) scale(0.65);">
                 
-                <!-- Category Tabs & Add Button -->
-                <div class="flex flex-wrap justify-between items-center gap-3 bg-pink-50/90 p-3 rounded-2xl border border-pink-200">
-                    <div class="flex gap-2">
-                        <button id="tab-all" class="tab-btn px-4 py-1.5 rounded-full font-fredoka text-xs bg-pink-500 text-white shadow">Semua Media</button>
-                        <button id="tab-photos" class="tab-btn px-4 py-1.5 rounded-full font-fredoka text-xs bg-white text-pink-600 hover:bg-pink-100">📷 Foto</button>
-                        <button id="tab-videos" class="tab-btn px-4 py-1.5 rounded-full font-fredoka text-xs bg-white text-pink-600 hover:bg-pink-100">🎥 Video</button>
-                    </div>
+                <!-- Lawn Grass Terrain -->
+                <div class="absolute inset-0 bg-emerald-400 rounded-[100px] shadow-2xl border-[24px] border-emerald-300 overflow-hidden">
+                    
+                    <!-- Complex Infrastructure Layer (Roads, Pavements, River, Fountain, Trees) -->
+                    <svg class="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                        
+                        <!-- Winding Flowers River & Bridge -->
+                        <path d="M 0 1300 Q 800 1100 1600 1300 T 3200 1200" fill="none" stroke="#38bdf8" stroke-width="90" class="fountain-water" />
+                        <path d="M 0 1300 Q 800 1100 1600 1300 T 3200 1200" fill="none" stroke="#7dd3fc" stroke-width="70" opacity="0.6" />
 
-                    <button id="toggle-upload-btn" class="glass-button px-4 py-1.5 rounded-full font-fredoka text-xs text-pink-600 flex items-center gap-2">
-                        <i class="fa-solid fa-plus"></i> Tambah Memori Baru
-                    </button>
-                </div>
+                        <!-- Wooden River Bridges -->
+                        <!-- Bridge Sektor A-B -->
+                        <rect x="760" y="1170" width="120" height="130" rx="15" fill="#b45309" stroke="#78350f" stroke-width="6" />
+                        <line x1="770" y1="1170" x2="770" y2="1300" stroke="#fef3c7" stroke-width="4" />
+                        <line x1="870" y1="1170" x2="870" y2="1300" stroke="#fef3c7" stroke-width="4" />
+                        
+                        <!-- Bridge Sektor C-D -->
+                        <rect x="2360" y="1180" width="120" height="130" rx="15" fill="#b45309" stroke="#78350f" stroke-width="6" />
 
-                <!-- Media Upload Form -->
-                <div id="upload-card" class="hidden bg-white p-4 rounded-2xl border-2 border-dashed border-pink-300 space-y-3">
-                    <h4 class="font-fredoka text-pink-600 text-sm flex items-center gap-2">
-                        <span>✨ Unggah Foto / Video Baru (Tersimpan di Perangkat)</span>
-                    </h4>
-                    <form id="upload-form" class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div class="col-span-1 md:col-span-1">
-                            <label class="cursor-pointer w-full h-28 bg-pink-50 hover:bg-pink-100 rounded-xl border border-pink-300 flex flex-col items-center justify-center text-pink-500 p-2 text-center transition">
-                                <i class="fa-solid fa-cloud-arrow-up text-2xl mb-1"></i>
-                                <span id="file-chosen-text" class="text-[11px] font-bold">Pilih Foto / Video</span>
-                                <input type="file" id="media-file-input" accept="image/*,video/*" class="hidden" required />
-                            </label>
+                        <!-- Main Asphalt Roads -->
+                        <!-- Central Horizontal Boulevard -->
+                        <rect x="0" y="1050" width="3200" height="160" fill="#475569" />
+                        <!-- Outer Ring Road Horizontal North -->
+                        <rect x="200" y="300" width="2800" height="120" fill="#475569" />
+                        <!-- Outer Ring Road Horizontal South -->
+                        <rect x="200" y="1950" width="2800" height="120" fill="#475569" />
+
+                        <!-- Vertical Streets -->
+                        <!-- Street 1 (West Sektor A & C) -->
+                        <rect x="350" y="300" width="130" height="1770" fill="#475569" />
+                        <!-- Street 2 (Mid-West) -->
+                        <rect x="1100" y="300" width="130" height="1770" fill="#475569" />
+                        <!-- Street 3 (Mid-East) -->
+                        <rect x="1950" y="300" width="130" height="1770" fill="#475569" />
+                        <!-- Street 4 (East Sektor B & D) -->
+                        <rect x="2700" y="300" width="130" height="1770" fill="#475569" />
+
+                        <!-- Road Dashed Centerlines -->
+                        <line x1="0" y1="1130" x2="3200" y2="1130" stroke="#fef08a" stroke-width="8" stroke-dasharray="30 20" />
+                        <line x1="200" y1="360" x2="3000" y2="360" stroke="#ffffff" stroke-width="6" stroke-dasharray="25 18" />
+                        <line x1="200" y1="2010" x2="3000" y2="2010" stroke="#ffffff" stroke-width="6" stroke-dasharray="25 18" />
+
+                        <line x1="415" y1="300" x2="415" y2="2070" stroke="#ffffff" stroke-width="6" stroke-dasharray="25 18" />
+                        <line x1="1165" y1="300" x2="1165" y2="2070" stroke="#ffffff" stroke-width="6" stroke-dasharray="25 18" />
+                        <line x1="2015" y1="300" x2="2015" y2="2070" stroke="#ffffff" stroke-width="6" stroke-dasharray="25 18" />
+                        <line x1="2765" y1="300" x2="2765" y2="2070" stroke="#ffffff" stroke-width="6" stroke-dasharray="25 18" />
+
+                        <!-- Pedestrian Crosswalk Stripings -->
+                        <g fill="#ffffff" stroke="#475569" stroke-width="2">
+                            <!-- Junction 1 -->
+                            <rect x="355" y="1020" width="120" height="20" />
+                            <rect x="355" y="1220" width="120" height="20" />
+                            <!-- Junction 2 -->
+                            <rect x="1105" y="1020" width="120" height="20" />
+                            <rect x="1105" y="1220" width="120" height="20" />
+                            <!-- Junction 3 -->
+                            <rect x="1955" y="1020" width="120" height="20" />
+                            <rect x="1955" y="1220" width="120" height="20" />
+                            <!-- Junction 4 -->
+                            <rect x="2705" y="1020" width="120" height="20" />
+                            <rect x="2705" y="1220" width="120" height="20" />
+                        </g>
+
+                        <!-- Street Lamps System -->
+                        <g class="street-lamps">
+                            <circle cx="330" cy="1020" r="10" fill="#64748b" />
+                            <circle cx="330" cy="1020" r="6" fill="#fef08a" class="street-lamp" />
+
+                            <circle cx="500" cy="1020" r="10" fill="#64748b" />
+                            <circle cx="500" cy="1020" r="6" fill="#fef08a" class="street-lamp" />
+
+                            <circle cx="1080" cy="1020" r="10" fill="#64748b" />
+                            <circle cx="1080" cy="1020" r="6" fill="#fef08a" class="street-lamp" />
+
+                            <circle cx="1250" cy="1020" r="10" fill="#64748b" />
+                            <circle cx="1250" cy="1020" r="6" fill="#fef08a" class="street-lamp" />
+
+                            <circle cx="1930" cy="1020" r="10" fill="#64748b" />
+                            <circle cx="1930" cy="1020" r="6" fill="#fef08a" class="street-lamp" />
+
+                            <circle cx="2100" cy="1020" r="10" fill="#64748b" />
+                            <circle cx="2100" cy="1020" r="6" fill="#fef08a" class="street-lamp" />
+
+                            <circle cx="2680" cy="1020" r="10" fill="#64748b" />
+                            <circle cx="2680" cy="1020" r="6" fill="#fef08a" class="street-lamp" />
+
+                            <circle cx="2850" cy="1020" r="10" fill="#64748b" />
+                            <circle cx="2850" cy="1020" r="6" fill="#fef08a" class="street-lamp" />
+                        </g>
+                    </svg>
+
+                    <!-- Central Megacomplex Community Park & Facilities Hub -->
+                    <div class="absolute left-[1350px] top-[750px] w-[500px] h-[700px] bg-emerald-300/90 rounded-[60px] border-8 border-emerald-200 shadow-2xl flex flex-col items-center justify-between p-6 pointer-events-none z-0">
+                        
+                        <!-- Park Banner Title -->
+                        <div class="bg-white/90 backdrop-blur px-6 py-2 rounded-full border-2 border-emerald-400 text-center shadow">
+                            <span class="font-title text-sm text-emerald-800">🌳 Central Berry Park & Bakery Cafe 🍰</span>
                         </div>
-                        <div class="col-span-1 md:col-span-2 flex flex-col justify-between gap-2">
-                            <input type="text" id="media-caption-input" placeholder="Tuliskan catatan manis..." class="w-full text-xs p-3 rounded-xl border border-pink-200 focus:outline-none focus:ring-2 focus:ring-pink-400">
-                            <div class="flex gap-2">
-                                <select id="media-sticker-input" class="text-xs p-2.5 rounded-xl border border-pink-200 bg-white text-pink-600">
-                                    <option value="🍓">Sticker: 🍓 Stroberi</option>
-                                    <option value="🫐">Sticker: 🫐 Blueberry</option>
-                                    <option value="🍋">Sticker: 🍋 Lemon</option>
-                                    <option value="🍊">Sticker: 🍊 Jeruk</option>
-                                    <option value="🍇">Sticker: 🍇 Anggur</option>
-                                    <option value="🌸">Sticker: 🌸 Bunga</option>
-                                    <option value="💖">Sticker: 💖 Cinta</option>
-                                </select>
-                                <button type="submit" class="flex-1 glass-button bg-pink-500 text-pink-600 font-fredoka text-xs py-2.5 rounded-xl shadow transition">
-                                    Simpan Memori 💖
-                                </button>
+
+                        <!-- Central Giant Fruit Fountain -->
+                        <div class="w-64 h-64 rounded-full bg-sky-200 border-8 border-sky-400 flex items-center justify-center relative shadow-2xl pointer-events-auto cursor-pointer hover:scale-105 transition-transform" onclick="triggerFountainSplashes()">
+                            <div class="w-48 h-48 rounded-full bg-sky-300 border-4 border-sky-500 water-pulse flex items-center justify-center">
+                                <div class="w-28 h-28 rounded-full bg-sky-400 border-4 border-white flex flex-col items-center justify-center text-4xl shadow-inner">
+                                    ⛲
+                                    <span class="text-[9px] font-bold text-sky-950 uppercase tracking-wider">Air Mancur</span>
+                                </div>
                             </div>
                         </div>
-                    </form>
+
+                        <!-- Pastel Cafe & Playground Facilities -->
+                        <div class="w-full flex justify-between items-center gap-4 pointer-events-auto">
+                            <!-- Pastel Bakery Cafe -->
+                            <div class="flex-1 bg-amber-100 border-2 border-amber-300 rounded-2xl p-3 text-center shadow">
+                                <span class="text-2xl">🧁</span>
+                                <h5 class="font-title text-xs text-amber-900">Kafe Roti Pastel</h5>
+                                <p class="text-[9px] font-semibold text-amber-700">Kue & Jus Segar</p>
+                            </div>
+                            <!-- Playground -->
+                            <div class="flex-1 bg-pink-100 border-2 border-pink-300 rounded-2xl p-3 text-center shadow">
+                                <span class="text-2xl">🎠</span>
+                                <h5 class="font-title text-xs text-pink-900">Taman Bermain</h5>
+                                <p class="text-[9px] font-semibold text-pink-700">Komidi Putar & Ayunan</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Gate Security Guardhouse (Bottom Center) -->
+                    <div class="absolute left-[1500px] top-[2100px] w-52 h-36 bg-amber-100 border-4 border-amber-400 rounded-2xl shadow-2xl p-3 text-center z-20 flex flex-col items-center justify-center">
+                        <span class="text-2xl">🪪</span>
+                        <h4 class="font-title text-xs text-amber-900">Gerbang Utama & Pos Keamanan</h4>
+                        <p class="text-[9px] font-bold text-emerald-700">Selamat Datang di Berry Bitty City</p>
+                    </div>
+
+                    <!-- Dynamic Fruit House Plots Layer -->
+                    <div id="housesLayer" class="absolute inset-0 z-10 pointer-events-auto">
+                        <!-- Houses rendered via JavaScript -->
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Sector Quick Jump Floating Navigation Bar (Top Center / Left) -->
+        <div class="fixed top-24 left-6 z-30 flex flex-col gap-2">
+            <div class="glass-panel p-2.5 rounded-2xl shadow-xl border border-white/80 flex flex-col gap-1.5 w-44">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-1">Lompat Ke Sektor</p>
+                <button onclick="jumpToSector('A')" class="px-3 py-1.5 rounded-xl bg-yellow-100 hover:bg-yellow-200 text-yellow-900 text-xs font-bold text-left flex items-center justify-between transition-transform active:scale-95">
+                    <span>🍋 Sektor A</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </button>
+                <button onclick="jumpToSector('B')" class="px-3 py-1.5 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-900 text-xs font-bold text-left flex items-center justify-between transition-transform active:scale-95">
+                    <span>🍓 Sektor B</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </button>
+                <button onclick="jumpToSector('C')" class="px-3 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-900 text-xs font-bold text-left flex items-center justify-between transition-transform active:scale-95">
+                    <span>🍍 Sektor C</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </button>
+                <button onclick="jumpToSector('D')" class="px-3 py-1.5 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-900 text-xs font-bold text-left flex items-center justify-between transition-transform active:scale-95">
+                    <span>🍇 Sektor D</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </button>
+                <button onclick="jumpToCenter Park()" class="px-3 py-1.5 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-900 text-xs font-bold text-left flex items-center justify-between transition-transform active:scale-95">
+                    <span>⛲ Taman Kota</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Interactive Mini-Map Navigator Widget (Bottom Right) -->
+        <div class="fixed bottom-6 right-6 z-30 glass-panel p-2.5 rounded-3xl shadow-2xl border-2 border-white flex flex-col items-center w-52 h-44 hidden md:flex">
+            <div class="w-full flex items-center justify-between px-1 mb-1">
+                <span class="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Peta Navigasi Mini</span>
+                <span class="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">3200×2400</span>
+            </div>
+            <!-- Mini-map viewport window -->
+            <div id="miniMap" class="w-full h-full bg-emerald-500 rounded-xl relative overflow-hidden border border-emerald-600 cursor-pointer" onclick="navigateMiniMap(event)">
+                <!-- Mini-map river & road representation -->
+                <div class="absolute inset-0 opacity-40 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:8px_8px]"></div>
+                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-3 bg-sky-300"></div>
+                <div class="absolute left-1/2 top-0 -translate-x-1/2 h-full w-3 bg-sky-300"></div>
+                <!-- Mini Central Park Indicator -->
+                <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-emerald-300 border border-white"></div>
+                <!-- Mini viewport view indicator box -->
+                <div id="miniViewportBox" class="absolute border-2 border-rose-500 bg-rose-500/20 rounded shadow-md pointer-events-none transition-all duration-100"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- House Detail Interactive Modal Dialog -->
+    <div id="houseModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl max-w-3xl w-full p-6 md:p-8 shadow-2xl relative border-4 border-yellow-300 transform scale-90 transition-transform duration-300 max-h-[90vh] overflow-y-auto" id="modalCard">
+            
+            <!-- Close Modal Button -->
+            <button onclick="closeModal()" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center font-bold text-lg transition-colors z-10">
+                ✕
+            </button>
+
+            <!-- Modal Content Layout -->
+            <div class="flex flex-col md:flex-row gap-6 items-center">
+                <!-- SVG House Graphic Box -->
+                <div class="w-full md:w-1/2 h-72 bg-gradient-to-b from-sky-100 to-emerald-100 rounded-2xl flex items-center justify-center p-4 border-2 border-slate-100 relative overflow-hidden" id="modalHouseGraphic">
+                    <!-- Dynamic SVG Preview -->
                 </div>
 
-                <!-- Media Grid -->
-                <div>
-                    <div id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+                <!-- House Info & Resident Details -->
+                <div class="w-full md:w-1/2 space-y-3">
+                    <div class="flex items-center justify-between gap-2">
+                        <span id="modalPlotBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 uppercase tracking-wider">BLOK A-1</span>
+                        <span id="modalSectorBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-sky-100 text-sky-800">🍋 Sektor A</span>
+                        <span id="modalStatusBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">🟢 Terisi</span>
+                    </div>
 
-                    <!-- Empty State -->
-                    <div id="empty-state" class="hidden text-center py-12 bg-pink-50/50 rounded-2xl border border-pink-200">
-                        <div class="text-5xl mb-2">🌸</div>
-                        <p class="font-fredoka text-pink-500 text-base">Belum ada memori di rumah buah ini!</p>
-                        <p class="text-xs text-pink-400 mt-1">Klik "+ Tambah Memori Baru" untuk mengunggah foto/video.</p>
+                    <h2 id="modalHouseTitle" class="font-title text-2xl md:text-3xl text-slate-800 leading-tight">Rumah Lemon Meringue</h2>
+                    <p id="modalAddress" class="text-xs text-slate-500 font-semibold">📍 Jalan Sitrus Utama No. 1, Sektor A</p>
+
+                    <!-- Resident Info Card -->
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 space-y-2">
+                        <div class="flex items-center gap-3">
+                            <div id="modalAvatar" class="w-12 h-12 rounded-2xl bg-yellow-200 flex items-center justify-center text-2xl shadow">🍋</div>
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Pemilik / Penghuni</p>
+                                <p id="modalOwner" class="font-bold text-slate-800 text-base">Lemon Meringue</p>
+                            </div>
+                        </div>
+                        <p id="modalDescription" class="text-xs text-slate-600 leading-relaxed pt-2 border-t border-slate-200/60">
+                            Deskripsi detail rumah buah fantasi...
+                        </p>
+                    </div>
+
+                    <!-- Interactive Buttons (Doorbell & Light Switch) -->
+                    <div class="grid grid-cols-2 gap-3 pt-1">
+                        <button id="ringBellBtn" onclick="ringDoorbell()" class="py-2.5 px-3 bg-amber-400 hover:bg-amber-500 text-amber-950 rounded-xl font-bold text-xs md:text-sm shadow flex items-center justify-center gap-2 transition-transform active:scale-95">
+                            <i class="fa-solid fa-bell"></i> Bunyikan Bel
+                        </button>
+                        <button id="toggleLightBtn" onclick="toggleHouseLight()" class="py-2.5 px-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-bold text-xs md:text-sm shadow flex items-center justify-center gap-2 transition-transform active:scale-95">
+                            <i class="fa-solid fa-lightbulb"></i> Saklar Lampu
+                        </button>
+                    </div>
+
+                    <!-- Interactive Guestbook Message Input -->
+                    <div class="pt-2 border-t border-slate-200">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tinggalkan Pesan Pengunjung / Salam</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="guestNoteInput" placeholder="Tulis ucapan halo..." class="flex-1 px-3 py-1.5 rounded-xl text-xs border border-slate-200 focus:ring-2 focus:ring-emerald-400 outline-none">
+                            <button onclick="sendGuestNote()" class="px-3 py-1.5 bg-emerald-500 text-white font-bold text-xs rounded-xl shadow hover:bg-emerald-600">Kirim</button>
+                        </div>
+                        <p id="guestNoteAlert" class="text-[10px] text-emerald-600 font-bold mt-1 hidden">✨ Pesan berhasil dikirim ke pemilik rumah!</p>
                     </div>
                 </div>
-
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="p-3 bg-pink-100/70 border-t border-pink-200 text-center text-xs text-pink-600 font-bold flex justify-between items-center px-6">
-                <span>🎀 Berry Bitty City 12 Fruit Houses</span>
-                <span>IndexedDB Storage</span>
             </div>
         </div>
     </div>
 
-    <!-- Lightbox Modal -->
-    <div id="lightbox-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 hidden p-4">
-        <button id="close-lightbox" class="absolute top-5 right-5 text-white hover:text-pink-300 text-3xl font-bold z-10">✕</button>
-        <div id="lightbox-body" class="max-w-4xl max-h-[85vh] flex items-center justify-center rounded-2xl overflow-hidden shadow-2xl"></div>
-    </div>
+    <!-- Add New Plot Modal -->
+    <div id="addHouseModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative border-4 border-emerald-300">
+            <button onclick="closeAddHouseModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center font-bold">✕</button>
+            
+            <h3 class="font-title text-2xl text-emerald-800 mb-4 flex items-center gap-2">
+                <span>🏡</span> Bangun Kavling Baru
+            </h3>
 
-    <!-- Info Welcome Modal -->
-    <div id="info-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-pink-950/40 backdrop-blur-sm transition-opacity">
-        <div class="glass-panel p-6 md:p-8 rounded-3xl max-w-lg w-11/12 text-center relative border-4 border-pink-300 shadow-2xl">
-            <button class="close-info absolute top-4 right-4 text-pink-400 hover:text-pink-600 text-2xl font-bold">✕</button>
-            <div class="text-5xl mb-2">🍓🫐🍉🍍</div>
-            <h2 class="font-fredoka text-2xl md:text-3xl text-pink-600 mb-2">Berry Bitty Fruit City!</h2>
-            <p class="text-sm text-pink-700 leading-relaxed mb-5">
-                Peta 3D dengan <b>12 Rumah Buah Unik Detail Strawberry Shortcake Style</b>! Setiap rumah memiliki warna khas buahnya tersendiri dengan arsitektur detail yang identik.
-            </p>
-            <div class="text-xs text-pink-700 text-left space-y-2 mb-6 bg-pink-50/80 p-4 rounded-2xl border border-pink-200">
-                <p class="flex items-center gap-2"><span>🖱️</span> <span><b>Klik & Drag:</b> Putar sudut pandang peta 3D.</span></p>
-                <p class="flex items-center gap-2"><span>🔍</span> <span><b>Scroll / Pinch:</b> Zoom in dan zoom out.</span></p>
-                <p class="flex items-center gap-2"><span>🏡</span> <span><b>Klik Rumah:</b> Membuka galeri foto & video per buah.</span></p>
-            </div>
-            <button class="close-info glass-button px-8 py-3 rounded-full font-fredoka text-pink-600 text-base shadow-lg transition active:scale-95">
-                Mulai Jelajah 12 Rumah Buah 💕
-            </button>
+            <form onsubmit="handleAddHouse(event)" class="space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Nomor Blok Kavling</label>
+                        <input type="text" id="newHousePlot" required placeholder="Contoh: BLOK E-1" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-400 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Sektor</label>
+                        <select id="newHouseSector" class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-400 outline-none text-sm bg-white font-semibold">
+                            <option value="A">🍋 Sektor A</option>
+                            <option value="B">🍓 Sektor B</option>
+                            <option value="C">🍍 Sektor C</option>
+                            <option value="D">🍇 Sektor D</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Nama Bangunan / Rumah</label>
+                    <input type="text" id="newHouseTitle" required placeholder="Contoh: Pondok Kiwi Segar" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-400 outline-none text-sm">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Nama Penghuni / Pemilik</label>
+                    <input type="text" id="newHouseOwner" required placeholder="Contoh: Kiwi Greenie" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-400 outline-none text-sm">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Tema Buah</label>
+                        <select id="newHouseTheme" class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-400 outline-none text-sm bg-white font-semibold">
+                            <option value="lemon">🍋 Lemon</option>
+                            <option value="strawberry">🍓 Stroberi</option>
+                            <option value="orange">🍊 Jeruk</option>
+                            <option value="blueberry">🫐 Blueberry</option>
+                            <option value="pineapple">🍍 Nanas</option>
+                            <option value="watermelon">🍉 Semangka</option>
+                            <option value="grape">🍇 Anggur</option>
+                            <option value="apple">🍎 Apel</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Status</label>
+                        <select id="newHouseStatus" class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-400 outline-none text-sm bg-white font-semibold">
+                            <option value="Terisi">🟢 Terisi</option>
+                            <option value="Dijual">🟡 Dijual</option>
+                            <option value="Dalam Pembangunan">🏗️ Pembangunan</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Deskripsi Rumah</label>
+                    <textarea id="newHouseDesc" rows="2" placeholder="Tuliskan cerita / keunikan rumah baru ini..." class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-400 outline-none text-sm resize-none"></textarea>
+                </div>
+
+                <button type="submit" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm rounded-xl shadow-lg transition-transform active:scale-95">
+                    Tambahkan ke Megacomplex ✨
+                </button>
+            </form>
         </div>
     </div>
 
     <script>
-        // INDEXEDDB DATABASE FOR LOCAL MEDIA STORAGE
-        const DB_NAME = 'BerryCityFruitDB';
-        const DB_VERSION = 1;
-        let db;
+        // Global Map Canvas Variables & Drag-Pan State
+        let currentZoom = 0.65;
+        let panX = -800;
+        let panY = -600;
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+        let isNight = false;
+        let selectedHouseId = null;
 
-        function initDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, DB_VERSION);
-                request.onupgradeneeded = (e) => {
-                    const database = e.target.result;
-                    if (!database.objectStoreNames.contains('media')) {
-                        database.createObjectStore('media', { keyPath: 'id' });
-                    }
-                };
-                request.onsuccess = (e) => { db = e.target.result; resolve(db); };
-                request.onerror = (e) => reject(e);
-            });
-        }
-
-        async function saveMediaToDB(houseId, mediaItem) {
-            if (!db) await initDB();
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction('media', 'readwrite');
-                tx.objectStore('media').put({ ...mediaItem, houseId });
-                tx.oncomplete = () => resolve();
-                tx.onerror = (e) => reject(e);
-            });
-        }
-
-        async function getMediaFromDB(houseId) {
-            if (!db) await initDB();
-            return new Promise((resolve) => {
-                const tx = db.transaction('media', 'readonly');
-                const request = tx.objectStore('media').getAll();
-                request.onsuccess = () => {
-                    const all = request.result || [];
-                    const filtered = all.filter(item => item.houseId === houseId);
-                    const defaults = FRUIT_HOUSES[houseId]?.defaultMedia || [];
-                    resolve([...filtered, ...defaults]);
-                };
-                request.onerror = () => resolve(FRUIT_HOUSES[houseId]?.defaultMedia || []);
-            });
-        }
-
-        async function deleteMediaFromDB(id) {
-            if (!db) await initDB();
-            return new Promise((resolve) => {
-                const tx = db.transaction('media', 'readwrite');
-                tx.objectStore('media').delete(id);
-                tx.oncomplete = () => resolve();
-            });
-        }
-
-        // Web Audio Synthesizer
+        // Web Audio API Sound Synthesizer
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playCuteSound(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
+
+        function playDoorbellSound() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
             const now = audioCtx.currentTime;
+            
+            // First chime tone
+            const osc1 = audioCtx.createOscillator();
+            const gain1 = audioCtx.createGain();
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(659.25, now); 
+            gain1.gain.setValueAtTime(0.3, now);
+            gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+            osc1.connect(gain1);
+            gain1.connect(audioCtx.destination);
+            osc1.start(now);
+            osc1.stop(now + 0.8);
 
-            if (type === 'hover') {
-                osc.type = 'sine'; osc.frequency.setValueAtTime(587.33, now);
-                gain.gain.setValueAtTime(0.02, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-                osc.start(now); osc.stop(now + 0.08);
-            } else if (type === 'click') {
-                osc.type = 'triangle'; osc.frequency.setValueAtTime(523.25, now);
-                osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
-                gain.gain.setValueAtTime(0.06, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-                osc.start(now); osc.stop(now + 0.12);
-            }
+            // Second chime tone
+            const osc2 = audioCtx.createOscillator();
+            const gain2 = audioCtx.createGain();
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(523.25, now + 0.3); 
+            gain2.gain.setValueAtTime(0.4, now + 0.3);
+            gain2.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+            osc2.connect(gain2);
+            gain2.connect(audioCtx.destination);
+            osc2.start(now + 0.3);
+            osc2.stop(now + 1.2);
         }
 
-        // 12 FRUIT HOUSES CONFIGURATION WITH DISTINCT COLOR THEMES & MATCHING STRAWBERRY SHORTCAKE ARCHITECTURE
-        const FRUIT_HOUSES = {
-            'strawberry': { id: 'strawberry', name: 'Rumah Toko Stroberi', owner: 'Strawberry Shortcake 🍓', icon: '🍓', color: 0xf43f5e, doorColor: 0xbe123c, pos: { x: 0, z: 0 }, desc: 'Pusat toko kue stroberi manis terlezat!', defaultMedia: [{ id: 'd1', type: 'image', url: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=600&q=80', caption: 'Kue Tar Stroberi 🍰', date: '2026-05-10', sticker: '🍓' }] },
-            'raspberry': { id: 'raspberry', name: 'Butik Raspberry Dome', owner: 'Raspberry Torte 🍇', icon: '🍇', color: 0xbe185d, doorColor: 0x831843, pos: { x: 38, z: -30 }, desc: 'Butik fasyen pita raspberry manis.', defaultMedia: [] },
-            'blueberry': { id: 'blueberry', name: 'Perpustakaan Blueberry', owner: 'Blueberry Muffin 🫐', icon: '🫐', color: 0x2563eb, doorColor: 0x1e40af, pos: { x: 42, z: 38 }, desc: 'Perpustakaan kerdik buah blueberry.', defaultMedia: [] },
-            'lemon': { id: 'lemon', name: 'Salon Rambut Lemon', owner: 'Lemon Meringue 🍋', icon: '🍋', color: 0xeab308, doorColor: 0xa16207, pos: { x: 0, z: -48 }, desc: 'Salon perawatan bernuansa kuning lemon.', defaultMedia: [] },
-            'orange': { id: 'orange', name: 'Toko Kebun Jeruk', owner: 'Orange Blossom 🍊', icon: '🍊', color: 0xf97316, doorColor: 0xc2410c, pos: { x: -38, z: -30 }, desc: 'Kebun bunga dan buah segar.', defaultMedia: [] },
-            'plum': { id: 'plum', name: 'Studio Tari Plum', owner: 'Plum Pudding 🔮', icon: '🔮', color: 0x7e22ce, doorColor: 0x581c87, pos: { x: -48, z: 0 }, desc: 'Istana balet dan musik ungu.', defaultMedia: [] },
-            'watermelon': { id: 'watermelon', name: 'Pondok Semangka Pantai', owner: 'Watermelon Waterpark 🍉', icon: '🍉', color: 0xef4444, doorColor: 0x15803d, pos: { x: 28, z: -62 }, desc: 'Pondok segar semangka cerah.', defaultMedia: [] },
-            'pineapple': { id: 'pineapple', name: 'Villa Nanas Tropis', owner: 'Pineapple Penny 🍍', icon: '🍍', color: 0xd97706, doorColor: 0x92400e, pos: { x: -28, z: -62 }, desc: 'Villa nanas tropis penuh kehangatan.', defaultMedia: [] },
-            'cherry': { id: 'cherry', name: 'Rumah Kembar Ceri', owner: 'Cherry Jam 🍒', icon: '🍒', color: 0x9f1239, doorColor: 0x4c0519, pos: { x: 52, z: 0 }, desc: 'Cottage ceri ganda nan anggun.', defaultMedia: [] },
-            'peach': { id: 'peach', name: 'Bungalow Persik Lembut', owner: 'Peach Blossom 🍑', icon: '🍑', color: 0xfb923c, doorColor: 0x9a3412, pos: { x: -42, z: 38 }, desc: 'Bungalow persik merah muda yang lembut.', defaultMedia: [] },
-            'grape': { id: 'grape', name: 'Rumah Pohon Anggur', owner: 'Grapevine Village 🍇', icon: '🍇', color: 0x9333ea, doorColor: 0x581c87, pos: { x: -18, z: 62 }, desc: 'Rumah anggur di bukit cantik.', defaultMedia: [] },
-            'apple': { id: 'apple', name: 'Manor Selai Apel Merah', owner: 'Apple Dumplin 🍎', icon: '🍎', color: 0xdc2626, doorColor: 0x7f1d1d, pos: { x: 22, z: 62 }, desc: 'Manor apel merah ceria.', defaultMedia: [] }
-        };
+        // Comprehensive Houses Database (13 Initial Fruit Houses across 4 Sectors)
+        let houses = [
+            // Sektor A: Lemon & Citrus Grove
+            {
+                id: 'house-a1',
+                sector: 'A',
+                plotNumber: 'BLOK A-1',
+                x: 100,
+                y: 100,
+                title: 'Rumah Meringue Lemon',
+                owner: 'Lemon Meringue',
+                theme: 'lemon',
+                status: 'Terisi',
+                address: 'Jalan Sitrus Utama No. 1, Sektor A',
+                avatar: '🍋',
+                description: 'Rumah ikonik presisi sesuai gambar referensi: atap irisan lemon kuning melengkung, dinding berpola garis cyan pastel, kupola mahkota bunga, dan halaman penuh mawar ungu.',
+                lightOn: true,
+                svgType: 'lemon'
+            },
+            {
+                id: 'house-a2',
+                sector: 'A',
+                plotNumber: 'BLOK A-2',
+                x: 600,
+                y: 100,
+                title: 'Villa Orange Blossom',
+                owner: 'Orange Blossom',
+                theme: 'orange',
+                status: 'Terisi',
+                address: 'Jalan Sitrus Utama No. 3, Sektor A',
+                avatar: '🍊',
+                description: 'Villa hangat dengan atap berbentuk separuh buah jeruk keprok segar dan cerobong asap aroma kelopak bunga jeruk.',
+                lightOn: true,
+                svgType: 'orange'
+            },
+            {
+                id: 'house-a3',
+                sector: 'A',
+                plotNumber: 'BLOK A-3',
+                x: 100,
+                y: 550,
+                title: 'Pondok Lime Mint',
+                owner: 'Minty Citrus',
+                theme: 'lime',
+                status: 'Terisi',
+                address: 'Jalan Sitrus Selatan No. 5, Sektor A',
+                avatar: '🍏',
+                description: 'Pondok asri bertema jeruk nipis mint dengan atap hijau segar melengkung dan taman herbal.',
+                lightOn: false,
+                svgType: 'lime'
+            },
 
-        // Populate Quick Jump Dropdown
-        const select = document.getElementById('quick-jump-select');
-        Object.values(FRUIT_HOUSES).forEach(h => {
-            const opt = document.createElement('option');
-            opt.value = h.id; opt.textContent = `${h.icon} ${h.name}`;
-            select.appendChild(opt);
-        });
+            // Sektor B: Berry Village
+            {
+                id: 'house-b1',
+                sector: 'B',
+                plotNumber: 'BLOK B-1',
+                x: 2200,
+                y: 100,
+                title: 'Pondok Stroberi Manis',
+                owner: 'Strawberry Shortcake',
+                theme: 'strawberry',
+                status: 'Terisi',
+                address: 'Jalan Berry Raya No. 2, Sektor B',
+                avatar: '🍓',
+                description: 'Pondok bertema stroberi merah merona dengan bintik biji keemasan, mahkota daun hijau segar, dan jendela bulat beri.',
+                lightOn: true,
+                svgType: 'strawberry'
+            },
+            {
+                id: 'house-b2',
+                sector: 'B',
+                plotNumber: 'BLOK B-2',
+                x: 2700,
+                y: 550,
+                title: 'Muffin Blueberry Cottage',
+                owner: 'Blueberry Muffin',
+                theme: 'blueberry',
+                status: 'Terisi',
+                address: 'Jalan Berry Raya No. 4, Sektor B',
+                avatar: '🫐',
+                description: 'Rumah berbentuk kue muffin segar dengan atap berkubah warna nila murni dan ornamen buah blueberry raksasa.',
+                lightOn: true,
+                svgType: 'blueberry'
+            },
+            {
+                id: 'house-b3',
+                sector: 'B',
+                plotNumber: 'BLOK B-3',
+                x: 2200,
+                y: 550,
+                title: 'Villa Raspberry Cream',
+                owner: 'Raspberry Torte',
+                theme: 'raspberry',
+                status: 'Terisi',
+                address: 'Jalan Berry Indah No. 6, Sektor B',
+                avatar: '🍧',
+                description: 'Villa raspberry merah muda bertingkat dengan aksen krim vanila manis di jendela.',
+                lightOn: true,
+                svgType: 'raspberry'
+            },
 
-        // THREE.JS SCENE SETUP
-        const container = document.getElementById('canvas-container');
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xfce7f3);
-        scene.fog = new THREE.FogExp2(0xfce7f3, 0.0035);
+            // Sektor C: Tropical Fruit Park
+            {
+                id: 'house-c1',
+                sector: 'C',
+                plotNumber: 'BLOK C-1',
+                x: 100,
+                y: 1450,
+                title: 'Istana Nanas Tropis',
+                owner: 'Pineapple Delight',
+                theme: 'pineapple',
+                status: 'Terisi',
+                address: 'Jalan Tropika No. 10, Sektor C',
+                avatar: '🍍',
+                description: 'Istana berbentuk nanas bersisik emas dengan mahkota daun hijau rimbun dan pintu lengkung hangat.',
+                lightOn: true,
+                svgType: 'pineapple'
+            },
+            {
+                id: 'house-c2',
+                sector: 'C',
+                plotNumber: 'BLOK C-2',
+                x: 600,
+                y: 1450,
+                title: 'Villa Melon Cantaloupe',
+                owner: 'Kavling Siap Huni',
+                theme: 'watermelon',
+                status: 'Dijual',
+                address: 'Jalan Tropika No. 12, Sektor C',
+                avatar: '🍉',
+                description: 'Villa beratap irisan semangka dan melon manis dengan interior luas dan kolam renang mini.',
+                lightOn: false,
+                svgType: 'watermelon'
+            },
+            {
+                id: 'house-c3',
+                sector: 'C',
+                plotNumber: 'BLOK C-3',
+                x: 600,
+                y: 1850,
+                title: 'Pondok Pisang Tropis',
+                owner: 'Banana Split',
+                theme: 'banana',
+                status: 'Dalam Pembangunan',
+                address: 'Jalan Tropika No. 14, Sektor C',
+                avatar: '🍌',
+                description: 'Pondok unik berbentuk lengkungan pisang matang yang cerah dan menyenangkan.',
+                lightOn: false,
+                svgType: 'banana'
+            },
 
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 80, 120);
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        container.appendChild(renderer.domElement);
-
-        const controls = new THREE.OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.maxPolarAngle = Math.PI / 2.05;
-        controls.minDistance = 15;
-        controls.maxDistance = 190;
-        controls.target.set(0, 0, 0);
-
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
-        scene.add(ambientLight);
-
-        const dirLight = new THREE.DirectionalLight(0xfff1f2, 0.95);
-        dirLight.position.set(70, 110, 60);
-        dirLight.castShadow = true;
-        dirLight.shadow.mapSize.width = 2048;
-        dirLight.shadow.mapSize.height = 2048;
-        dirLight.shadow.camera.near = 10;
-        dirLight.shadow.camera.far = 280;
-        dirLight.shadow.camera.left = -120;
-        dirLight.shadow.camera.right = 120;
-        dirLight.shadow.camera.top = 120;
-        dirLight.shadow.camera.bottom = -120;
-        scene.add(dirLight);
-
-        // Terrain Grass Mesh
-        const terrainGeo = new THREE.PlaneGeometry(260, 260, 64, 64);
-        terrainGeo.rotateX(-Math.PI / 2);
-        const posAttr = terrainGeo.attributes.position;
-        for (let i = 0; i < posAttr.count; i++) {
-            const vx = posAttr.getX(i);
-            const vz = posAttr.getZ(i);
-            const dist = Math.sqrt(vx * vx + vz * vz);
-            const vy = Math.sin(vx * 0.04) * Math.cos(vz * 0.04) * 3 + Math.sin(dist * 0.03) * 2;
-            posAttr.setY(i, vy);
-        }
-        terrainGeo.computeVertexNormals();
-
-        const terrainMat = new THREE.MeshStandardMaterial({ color: 0x86efac, roughness: 0.8, metalness: 0.1 });
-        const terrain = new THREE.Mesh(terrainGeo, terrainMat);
-        terrain.receiveShadow = true;
-        scene.add(terrain);
-
-        // Winding River
-        const riverCurve = new THREE.CatmullRomCurve3([
-            new THREE.Vector3(-110, 0.5, -75),
-            new THREE.Vector3(-45, 0.5, -35),
-            new THREE.Vector3(0, 0.5, 10),
-            new THREE.Vector3(55, 0.5, 45),
-            new THREE.Vector3(110, 0.5, 85)
-        ]);
-        const riverGeo = new THREE.TubeGeometry(riverCurve, 64, 6.5, 8, false);
-        const riverMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.85 });
-        const river = new THREE.Mesh(riverGeo, riverMat);
-        river.position.y = -0.5;
-        scene.add(river);
-
-        const houseMeshes = {};
-
-        /**
-         * Builds a detailed 3D Strawberry Shortcake style house inspired by the reference image.
-         * Identical structure, but unique main color per house!
-         */
-        function createDetailedStrawberryHouse(config) {
-            const group = new THREE.Group();
-            group.position.set(config.pos.x, 0, config.pos.z);
-            group.userData = { houseId: config.id };
-
-            const mainColor = config.color;
-            const doorColor = config.doorColor;
-
-            // 1. BASE BUSH SURROUND & FOOTPATH
-            const bushGeo = new THREE.TorusGeometry(8, 1.8, 12, 24);
-            const bushMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.9 });
-            const bushRing = new THREE.Mesh(bushGeo, bushMat);
-            bushRing.rotation.x = Math.PI / 2;
-            bushRing.position.y = 0.5;
-            bushRing.scale.set(1.1, 1.1, 0.8);
-            group.add(bushRing);
-
-            // Path Stones leading to door
-            for (let i = 0; i < 4; i++) {
-                const stone = new THREE.Mesh(
-                    new THREE.CylinderGeometry(1.2 - i*0.1, 1.4 - i*0.1, 0.2, 12),
-                    new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.7 })
-                );
-                stone.position.set(0, 0.2, 8.5 + i * 1.8);
-                stone.rotation.y = Math.random() * Math.PI;
-                group.add(stone);
+            // Sektor D: Sweet Orchard Avenue
+            {
+                id: 'house-d1',
+                sector: 'D',
+                plotNumber: 'BLOK D-1',
+                x: 2200,
+                y: 1450,
+                title: 'Mansion Anggur Grape',
+                owner: 'Grape Duchess',
+                theme: 'grape',
+                status: 'Terisi',
+                address: 'Jalan Orchard Utama No. 20, Sektor D',
+                avatar: '🍇',
+                description: 'Mansion megah dengan atap menyerupai kelompok buah anggur ungu tua yang sangat elegan.',
+                lightOn: true,
+                svgType: 'grape'
+            },
+            {
+                id: 'house-d2',
+                sector: 'D',
+                plotNumber: 'BLOK D-2',
+                x: 2700,
+                y: 1450,
+                title: 'Pondok Ceri Kembar',
+                owner: 'Cherry Blossom',
+                theme: 'cherry',
+                status: 'Terisi',
+                address: 'Jalan Orchard Utama No. 22, Sektor D',
+                avatar: '🍒',
+                description: 'Pondok imut dengan dua kubah berbentuk buah ceri merah mengkilap dan tangkai hijau.',
+                lightOn: true,
+                svgType: 'cherry'
+            },
+            {
+                id: 'house-d3',
+                sector: 'D',
+                plotNumber: 'BLOK D-3',
+                x: 2200,
+                y: 1850,
+                title: 'Villa Apel Merah',
+                owner: 'Apple Dumpling',
+                theme: 'apple',
+                status: 'Terisi',
+                address: 'Jalan Orchard Indah No. 24, Sektor D',
+                avatar: '🍎',
+                description: 'Villa berbentuk buah apel merah manis lengkap dengan tangkai dan daun segar.',
+                lightOn: true,
+                svgType: 'apple'
+            },
+            {
+                id: 'house-d4',
+                sector: 'D',
+                plotNumber: 'BLOK D-4',
+                x: 2700,
+                y: 1850,
+                title: 'Pondok Buah Naga',
+                owner: 'Kavling Siap Huni',
+                theme: 'dragonfruit',
+                status: 'Dijual',
+                address: 'Jalan Orchard Indah No. 26, Sektor D',
+                avatar: '🐲',
+                description: 'Pondok eksotis bertema buah naga magenta cerah dengan kelopak sisik hijau unik.',
+                lightOn: false,
+                svgType: 'dragonfruit'
             }
+        ];
 
-            // 2. MAIN SPHERICAL FRUIT BODY
-            const bodyGeo = new THREE.SphereGeometry(8.5, 32, 24);
-            bodyGeo.scale(1, 1.12, 1);
-            const bodyMat = new THREE.MeshStandardMaterial({
-                color: mainColor,
-                roughness: 0.45,
-                metalness: 0.05
-            });
-            const body = new THREE.Mesh(bodyGeo, bodyMat);
-            body.position.y = 8.5;
-            body.castShadow = true;
-            body.receiveShadow = true;
-            group.add(body);
+        function generateHouseSVG(house) {
+            const isLit = house.lightOn || !isNight;
+            const windowFill = isLit ? '#fef08a' : '#475569';
+            const windowGlowClass = house.lightOn ? 'window-glow' : '';
 
-            // 3. NATURAL SEED DIMPLES / DOTS AROUND THE BODY
-            const seedGeo = new THREE.SphereGeometry(0.22, 8, 8);
-            seedGeo.scale(1, 1.6, 0.5);
-            const seedMat = new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.3 });
-
-            const seedCount = 45;
-            for (let i = 0; i < seedCount; i++) {
-                const phi = Math.acos(-1 + (2 * i) / seedCount);
-                const theta = Math.sqrt(seedCount * Math.PI) * phi;
-                
-                // Avoid placing seeds inside door frame area
-                if (phi > 2.2 && Math.abs(theta % (Math.PI * 2) - Math.PI) < 0.6) continue;
-
-                const seed = new THREE.Mesh(seedGeo, seedMat);
-                const r = 8.6;
-                const x = r * Math.sin(phi) * Math.cos(theta);
-                const y = 8.5 + r * 1.12 * Math.cos(phi);
-                const z = r * Math.sin(phi) * Math.sin(theta);
-
-                seed.position.set(x, y, z);
-                seed.lookAt(0, 8.5, 0);
-                group.add(seed);
-            }
-
-            // 4. ARCHED DOORWAY WITH ENTRY FRAME
-            const doorArchGeo = new THREE.TorusGeometry(2.4, 0.5, 12, 16, Math.PI);
-            const doorArchMat = new THREE.MeshStandardMaterial({ color: 0xfbcfe8, roughness: 0.5 });
-            const doorArch = new THREE.Mesh(doorArchGeo, doorArchMat);
-            doorArch.position.set(0, 3.8, 8.1);
-            group.add(doorArch);
-
-            const doorPillarGeo = new THREE.CylinderGeometry(0.5, 0.5, 3.8, 12);
-            const leftPillar = new THREE.Mesh(doorPillarGeo, doorArchMat);
-            leftPillar.position.set(-2.4, 1.9, 8.1);
-            const rightPillar = new THREE.Mesh(doorPillarGeo, doorArchMat);
-            rightPillar.position.set(2.4, 1.9, 8.1);
-            group.add(leftPillar);
-            group.add(rightPillar);
-
-            // Inner Door Interior (Warm Light Look)
-            const doorBackGeo = new THREE.PlaneGeometry(3.8, 4.2);
-            const doorBackMat = new THREE.MeshBasicMaterial({ color: doorColor });
-            const doorBack = new THREE.Mesh(doorBackGeo, doorBackMat);
-            doorBack.position.set(0, 2.1, 8.2);
-            group.add(doorBack);
-
-            // 5. CROWN LEAVES ON TOP & CURVED STEM
-            const leafGroup = new THREE.Group();
-            leafGroup.position.set(0, 16.5, 0);
-
-            const leafMat = new THREE.MeshStandardMaterial({ color: 0x4ade80, roughness: 0.5, side: THREE.DoubleSide });
-            const leafCount = 8;
-            for (let i = 0; i < leafCount; i++) {
-                const angle = (i / leafCount) * Math.PI * 2;
-                const leafShape = new THREE.Shape();
-                leafShape.moveTo(0, 0);
-                leafShape.quadraticCurveTo(2, 2.5, 0, 5.5);
-                leafShape.quadraticCurveTo(-2, 2.5, 0, 0);
-
-                const leafExtrude = new THREE.ExtrudeGeometry(leafShape, { depth: 0.2, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.1, bevelThickness: 0.1 });
-                const leafMesh = new THREE.Mesh(leafExtrude, leafMat);
-                leafMesh.rotation.x = Math.PI / 2 + 0.3;
-                leafMesh.rotation.z = angle;
-                leafMesh.position.set(Math.sin(angle) * 0.5, 0, Math.cos(angle) * 0.5);
-                leafMesh.castShadow = true;
-                leafGroup.add(leafMesh);
-            }
-            group.add(leafGroup);
-
-            // Top Curved Stem/Pedicel
-            const stemCurve = new THREE.CatmullRomCurve3([
-                new THREE.Vector3(0, 16.8, 0),
-                new THREE.Vector3(0.5, 18.5, 0.3),
-                new THREE.Vector3(1.8, 20.2, -0.5)
-            ]);
-            const stemGeo = new THREE.TubeGeometry(stemCurve, 16, 0.5, 8, false);
-            const stemMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.6 });
-            const stem = new THREE.Mesh(stemGeo, stemMat);
-            stem.castShadow = true;
-            group.add(stem);
-
-            // 6. WINDOWS & BALCONIES WITH FLOWER ACCENTS
-            const windowFrameMat = new THREE.MeshStandardMaterial({ color: 0xbae6fd, roughness: 0.3 }); // Light blue frame
-            const windowHoodMat = new THREE.MeshStandardMaterial({ color: mainColor, roughness: 0.4 });
-            const balconyMat = new THREE.MeshStandardMaterial({ color: 0xfef3c7, roughness: 0.6 });
-
-            const windowPositions = [
-                { x: 0, y: 5.5, z: 8.3, rotY: 0, scale: 1.2, isMain: true }, // Main Bottom Window
-                { x: -4.5, y: 11, z: 6.8, rotY: -0.6, scale: 0.9 },          // Upper Left Window
-                { x: 4.5, y: 11, z: 6.8, rotY: 0.6, scale: 0.9 },           // Upper Right Window
-                { x: -7.2, y: 6, z: 3.5, rotY: -1.2, scale: 0.85 },         // Side Left Window
-                { x: 7.2, y: 6, z: 3.5, rotY: 1.2, scale: 0.85 }            // Side Right Window
-            ];
-
-            windowPositions.forEach((wp) => {
-                const winGroup = new THREE.Group();
-                winGroup.position.set(wp.x, wp.y, wp.z);
-                winGroup.rotation.y = wp.rotY;
-                winGroup.scale.set(wp.scale, wp.scale, wp.scale);
-
-                // Frame
-                const frameGeo = new THREE.CylinderGeometry(1.6, 1.6, 0.3, 16);
-                frameGeo.rotateX(Math.PI / 2);
-                const frame = new THREE.Mesh(frameGeo, windowFrameMat);
-                winGroup.add(frame);
-
-                // Window Glass / Curtain
-                const glassGeo = new THREE.CircleGeometry(1.4, 16);
-                const glassMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe });
-                const glass = new THREE.Mesh(glassGeo, glassMat);
-                glass.position.z = 0.16;
-                winGroup.add(glass);
-
-                // Strawberry Top Hood
-                const hoodGeo = new THREE.ConeGeometry(2.0, 1.0, 12, 1, false, 0, Math.PI);
-                const hood = new THREE.Mesh(hoodGeo, windowHoodMat);
-                hood.rotation.z = Math.PI;
-                hood.position.set(0, 1.4, 0.2);
-                winGroup.add(hood);
-
-                // Add Balcony for upper windows
-                if (!wp.isMain && wp.y > 8) {
-                    const balconyGeo = new THREE.CylinderGeometry(1.8, 1.6, 0.8, 12, 1, false, 0, Math.PI);
-                    const balcony = new THREE.Mesh(balconyGeo, balconyMat);
-                    balcony.position.set(0, -1.2, 0.6);
-                    balcony.rotation.y = Math.PI / 2;
-                    winGroup.add(balcony);
-
-                    // Tiny White Flowers on Balcony
-                    for (let f = -1; f <= 1; f += 1) {
-                        const flower = new THREE.Mesh(
-                            new THREE.SphereGeometry(0.25, 8, 8),
-                            new THREE.MeshBasicMaterial({ color: 0xffffff })
-                        );
-                        flower.position.set(f * 0.8, -0.8, 1.8);
-                        winGroup.add(flower);
-                    }
-                }
-
-                group.add(winGroup);
-            });
-
-            // 7. WINDING DECORATIVE VINES WITH WHITE FLOWERS
-            const vineCurve = new THREE.CatmullRomCurve3([
-                new THREE.Vector3(-6, 4, 6),
-                new THREE.Vector3(-3, 8, 7.8),
-                new THREE.Vector3(0, 10, 8.2),
-                new THREE.Vector3(3, 8.5, 7.8),
-                new THREE.Vector3(6, 5, 5.5)
-            ]);
-            const vineGeo = new THREE.TubeGeometry(vineCurve, 32, 0.18, 8, false);
-            const vineMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.6 });
-            const vine = new THREE.Mesh(vineGeo, vineMat);
-            group.add(vine);
-
-            // Small Blossom Flowers along the vine
-            for (let i = 0; i < 7; i++) {
-                const t = i / 6;
-                const pt = vineCurve.getPoint(t);
-                const flowerPetals = new THREE.Mesh(
-                    new THREE.CircleGeometry(0.45, 5),
-                    new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
-                );
-                flowerPetals.position.set(pt.x, pt.y, pt.z + 0.2);
-                flowerPetals.lookAt(pt.x * 1.5, pt.y * 1.5, pt.z * 1.5);
-                group.add(flowerPetals);
-            }
-
-            // 8. FLOATING FRUIT ICON MARKER
-            const canvas = document.createElement('canvas');
-            canvas.width = 128; canvas.height = 128;
-            const ctx = canvas.getContext('2d');
-            ctx.font = '80px sans-serif';
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(config.icon, 64, 64);
-            const texture = new THREE.CanvasTexture(canvas);
-            const spriteMat = new THREE.SpriteMaterial({ map: texture });
-            const sprite = new THREE.Sprite(spriteMat);
-            sprite.position.y = 22;
-            sprite.scale.set(6.5, 6.5, 1);
-            group.add(sprite);
-
-            scene.add(group);
-            houseMeshes[config.id] = group;
-        }
-
-        // Build all 12 Strawberry Shortcake Style Houses with unique colors
-        Object.values(FRUIT_HOUSES).forEach(createDetailedStrawberryHouse);
-
-        // Decor Giant Flowers around the city
-        for (let i = 0; i < 22; i++) {
-            const flower = new THREE.Group();
-            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 6), new THREE.MeshStandardMaterial({ color: 0x22c55e }));
-            stem.position.y = 3; flower.add(stem);
-            const head = new THREE.Mesh(new THREE.SphereGeometry(1.5, 12, 12), new THREE.MeshStandardMaterial({ color: 0xfde047 }));
-            head.position.y = 6; flower.add(head);
-            flower.position.set((Math.random() - 0.5) * 200, 0, (Math.random() - 0.5) * 200);
-            scene.add(flower);
-        }
-
-        // Floating Sparkle Particles
-        const particleGeo = new THREE.BufferGeometry();
-        const pCount = 350;
-        const pPos = new Float32Array(pCount * 3);
-        for (let i = 0; i < pCount * 3; i += 3) {
-            pPos[i] = (Math.random() - 0.5) * 220;
-            pPos[i + 1] = Math.random() * 45;
-            pPos[i + 2] = (Math.random() - 0.5) * 220;
-        }
-        particleGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-        const particleMat = new THREE.PointsMaterial({ color: 0xfb7185, size: 0.9, transparent: true, opacity: 0.8 });
-        const particleSystem = new THREE.Points(particleGeo, particleMat);
-        scene.add(particleSystem);
-
-        // RAYCASTING & CLICK INTERACTION
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-
-        window.addEventListener('click', (e) => {
-            if (e.target.closest('#gallery-modal') || e.target.closest('#info-modal') || e.target.closest('header')) return;
-
-            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(scene.children, true);
-
-            for (let hit of intersects) {
-                let obj = hit.object;
-                while (obj.parent && !obj.userData.houseId) {
-                    obj = obj.parent;
-                }
-                if (obj.userData && obj.userData.houseId) {
-                    const houseId = obj.userData.houseId;
-                    playCuteSound('click');
-                    flyToHouse(houseId);
-                    openGallery(houseId);
-                    break;
-                }
-            }
-        });
-
-        function flyToHouse(houseId) {
-            const conf = FRUIT_HOUSES[houseId];
-            if (!conf) return;
-
-            gsap.to(camera.position, {
-                x: conf.pos.x,
-                y: 22,
-                z: conf.pos.z + 32,
-                duration: 1.5,
-                ease: "power2.inOut"
-            });
-            gsap.to(controls.target, {
-                x: conf.pos.x,
-                y: 8,
-                z: conf.pos.z,
-                duration: 1.5,
-                ease: "power2.inOut"
-            });
-        }
-
-        document.getElementById('reset-cam-btn').addEventListener('click', () => {
-            playCuteSound('click');
-            gsap.to(camera.position, { x: 0, y: 80, z: 120, duration: 1.5 });
-            gsap.to(controls.target, { x: 0, y: 0, z: 0, duration: 1.5 });
-        });
-
-        document.getElementById('quick-jump-select').addEventListener('change', (e) => {
-            if (e.target.value) {
-                playCuteSound('click');
-                flyToHouse(e.target.value);
-                openGallery(e.target.value);
-            }
-        });
-
-        // GALLERY MODAL LOGIC
-        let currentHouseId = null;
-        let activeFilter = 'all';
-
-        async function openGallery(houseId) {
-            currentHouseId = houseId;
-            const conf = FRUIT_HOUSES[houseId];
-
-            document.getElementById('modal-house-icon').textContent = conf.icon;
-            document.getElementById('modal-house-name').textContent = conf.name;
-            document.getElementById('modal-house-owner').textContent = `Pemilik: ${conf.owner} • ${conf.desc}`;
-            document.getElementById('upload-card').classList.add('hidden');
-
-            await renderGalleryGrid();
-            document.getElementById('gallery-modal').classList.remove('hidden');
-        }
-
-        async function renderGalleryGrid() {
-            if (!currentHouseId) return;
-            let list = await getMediaFromDB(currentHouseId);
-
-            if (activeFilter === 'photos') list = list.filter(m => m.type === 'image');
-            if (activeFilter === 'videos') list = list.filter(m => m.type === 'video');
-
-            const grid = document.getElementById('gallery-grid');
-            const empty = document.getElementById('empty-state');
-            grid.innerHTML = '';
-
-            if (list.length === 0) {
-                empty.classList.remove('hidden'); return;
+            if (house.svgType === 'lemon') {
+                return `
+                <svg viewBox="0 0 500 450" class="w-full h-auto drop-shadow-xl overflow-visible">
+                    <ellipse cx="250" cy="420" rx="220" ry="25" fill="#a3e635" />
+                    <g class="swaying">
+                        <circle cx="90" cy="370" r="12" fill="#a855f7"/><circle cx="130" cy="385" r="15" fill="#9333ea"/>
+                        <circle cx="370" cy="390" r="16" fill="#a855f7"/><circle cx="410" cy="380" r="14" fill="#c084fc"/>
+                    </g>
+                    <rect x="140" y="220" width="220" height="170" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="3"/>
+                    <line x1="140" y1="250" x2="360" y2="250" stroke="#bae6fd" stroke-width="3"/>
+                    <line x1="140" y1="280" x2="360" y2="280" stroke="#bae6fd" stroke-width="3"/>
+                    <line x1="140" y1="310" x2="360" y2="310" stroke="#bae6fd" stroke-width="3"/>
+                    <path d="M 130 230 C 130 140 370 140 370 230 Z" fill="#7dd3fc" stroke="#16a34a" stroke-width="5"/>
+                    <path d="M 50 280 C 40 80 410 40 470 330 C 420 370 180 320 50 280 Z" fill="#facc15" stroke="#ca8a04" stroke-width="6"/>
+                    <path d="M 70 265 C 60 100 390 60 445 315" fill="none" stroke="#fef08a" stroke-width="12" stroke-linecap="round"/>
+                    <path d="M 210 110 Q 250 70 290 110 Z" fill="#facc15" stroke="#15803d" stroke-width="3"/>
+                    <ellipse cx="250" cy="70" rx="35" ry="12" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+                    <path d="M 160 390 L 160 300 Q 185 275 210 300 L 210 390 Z" fill="#fef08a" stroke="#16a34a" stroke-width="4"/>
+                    <path d="M 240 380 L 240 300 Q 285 250 330 300 L 330 380 Z" fill="${windowFill}" class="${windowGlowClass}" stroke="#16a34a" stroke-width="5"/>
+                    <circle cx="285" cy="245" r="20" fill="#facc15" stroke="#15803d" stroke-width="3"/>
+                </svg>`;
+            } else if (house.svgType === 'strawberry') {
+                return `
+                <svg viewBox="0 0 500 450" class="w-full h-auto drop-shadow-xl overflow-visible">
+                    <ellipse cx="250" cy="420" rx="200" ry="22" fill="#a3e635" />
+                    <rect x="160" y="230" width="180" height="160" rx="16" fill="#fff1f2" stroke="#e11d48" stroke-width="4"/>
+                    <path d="M 120 250 Q 250 80 380 250 Q 250 220 120 250 Z" fill="#f43f5e" stroke="#be123c" stroke-width="5"/>
+                    <path d="M 250 110 C 130 150 140 240 250 230 C 360 240 370 150 250 110 Z" fill="#fb7185"/>
+                    <ellipse cx="200" cy="170" rx="4" ry="7" fill="#fef08a"/>
+                    <ellipse cx="250" cy="150" rx="4" ry="7" fill="#fef08a"/>
+                    <ellipse cx="300" cy="170" rx="4" ry="7" fill="#fef08a"/>
+                    <path d="M 250 110 Q 220 80 190 100 Z" fill="#22c55e"/><path d="M 250 110 Q 280 80 310 100 Z" fill="#22c55e"/>
+                    <path d="M 220 390 L 220 310 Q 250 290 280 310 L 280 390 Z" fill="#be123c"/>
+                    <circle cx="190" cy="300" r="22" fill="${windowFill}" class="${windowGlowClass}" stroke="#22c55e" stroke-width="4"/>
+                    <circle cx="310" cy="300" r="22" fill="${windowFill}" class="${windowGlowClass}" stroke="#22c55e" stroke-width="4"/>
+                </svg>`;
+            } else if (house.svgType === 'orange') {
+                return `
+                <svg viewBox="0 0 500 450" class="w-full h-auto drop-shadow-xl overflow-visible">
+                    <ellipse cx="250" cy="420" rx="200" ry="22" fill="#a3e635" />
+                    <rect x="150" y="220" width="200" height="170" rx="20" fill="#fff7ed" stroke="#ea580c" stroke-width="4"/>
+                    <path d="M 130 230 A 130 130 0 0 1 370 230 Z" fill="#f97316" stroke="#c2410c" stroke-width="5"/>
+                    <rect x="220" y="300" width="60" height="90" rx="30" fill="#c2410c"/>
+                    <circle cx="190" cy="280" r="20" fill="${windowFill}" class="${windowGlowClass}" stroke="#ea580c" stroke-width="3"/>
+                    <circle cx="310" cy="280" r="20" fill="${windowFill}" class="${windowGlowClass}" stroke="#ea580c" stroke-width="3"/>
+                </svg>`;
+            } else if (house.svgType === 'blueberry') {
+                return `
+                <svg viewBox="0 0 500 450" class="w-full h-auto drop-shadow-xl overflow-visible">
+                    <ellipse cx="250" cy="420" rx="200" ry="22" fill="#a3e635" />
+                    <path d="M 170 390 L 150 250 L 350 250 L 330 390 Z" fill="#fde68a" stroke="#d97706" stroke-width="4"/>
+                    <path d="M 120 260 C 120 140 380 140 380 260 Z" fill="#3b82f6" stroke="#1d4ed8" stroke-width="5"/>
+                    <rect x="225" y="310" width="50" height="80" rx="10" fill="#1d4ed8"/>
+                    <path d="M 210 270 Q 250 240 290 270 Z" fill="${windowFill}" class="${windowGlowClass}" stroke="#1d4ed8" stroke-width="3"/>
+                </svg>`;
+            } else if (house.svgType === 'pineapple') {
+                return `
+                <svg viewBox="0 0 500 450" class="w-full h-auto drop-shadow-xl overflow-visible">
+                    <ellipse cx="250" cy="420" rx="200" ry="22" fill="#a3e635" />
+                    <path d="M 160 390 C 130 200 370 200 340 390 Z" fill="#eab308" stroke="#ca8a04" stroke-width="5"/>
+                    <!-- Pineapple crown -->
+                    <path d="M 250 180 L 220 100 L 250 120 L 280 100 Z" fill="#16a34a"/>
+                    <path d="M 250 180 L 200 120 L 240 140 L 300 120 Z" fill="#22c55e"/>
+                    <rect x="220" y="300" width="60" height="90" rx="15" fill="#854d0e"/>
+                    <circle cx="200" cy="270" r="22" fill="${windowFill}" class="${windowGlowClass}" stroke="#ca8a04" stroke-width="3"/>
+                    <circle cx="300" cy="270" r="22" fill="${windowFill}" class="${windowGlowClass}" stroke="#ca8a04" stroke-width="3"/>
+                </svg>`;
             } else {
-                empty.classList.add('hidden');
+                // Default Grape / Tropical Mansion
+                return `
+                <svg viewBox="0 0 500 450" class="w-full h-auto drop-shadow-xl overflow-visible">
+                    <ellipse cx="250" cy="420" rx="200" ry="22" fill="#a3e635" />
+                    <rect x="150" y="210" width="200" height="180" rx="16" fill="#f3e8ff" stroke="#7e22ce" stroke-width="4"/>
+                    <circle cx="210" cy="180" r="35" fill="#a855f7" stroke="#6b21a8" stroke-width="3"/>
+                    <circle cx="290" cy="180" r="35" fill="#a855f7" stroke="#6b21a8" stroke-width="3"/>
+                    <circle cx="250" cy="130" r="35" fill="#9333ea" stroke="#6b21a8" stroke-width="3"/>
+                    <rect x="220" y="300" width="60" height="90" rx="10" fill="#6b21a8"/>
+                    <rect x="180" y="250" width="35" height="40" rx="6" fill="${windowFill}" class="${windowGlowClass}" stroke="#7e22ce" stroke-width="3"/>
+                    <rect x="285" y="250" width="35" height="40" rx="6" fill="${windowFill}" class="${windowGlowClass}" stroke="#7e22ce" stroke-width="3"/>
+                </svg>`;
             }
+        }
 
-            list.forEach(item => {
+        function renderHouses(filterList = houses) {
+            const housesLayer = document.getElementById('housesLayer');
+            housesLayer.innerHTML = '';
+
+            filterList.forEach(house => {
                 const card = document.createElement('div');
-                card.className = 'bg-white p-3 rounded-2xl border-2 border-pink-200 shadow hover:shadow-lg transition flex flex-col justify-between relative group';
+                card.className = 'house-card absolute flex flex-col items-center cursor-pointer';
+                card.style.left = `${house.x}px`;
+                card.style.top = `${house.y}px`;
+                card.style.width = '240px';
+                card.onclick = (e) => {
+                    e.stopPropagation();
+                    openModal(house.id);
+                };
 
-                let mediaHtml = item.type === 'video'
-                    ? `<div class="relative w-full h-36 bg-black rounded-xl overflow-hidden cursor-pointer" onclick="openLightbox('video', '${item.url}')">
-                            <video src="${item.url}" class="w-full h-full object-cover"></video>
-                            <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
-                                <div class="w-10 h-10 rounded-full bg-pink-500 text-white flex items-center justify-center">▶</div>
-                            </div>
-                       </div>`
-                    : `<div class="w-full h-36 bg-pink-50 rounded-xl overflow-hidden cursor-pointer" onclick="openLightbox('image', '${item.url}')">
-                            <img src="${item.url}" class="w-full h-full object-cover transition transform group-hover:scale-105"/>
-                       </div>`;
+                let badgeBg = 'bg-emerald-500 text-white';
+                if (house.status === 'Dijual') badgeBg = 'bg-amber-400 text-amber-950';
+                if (house.status === 'Dalam Pembangunan') badgeBg = 'bg-sky-500 text-white';
 
                 card.innerHTML = `
-                    <div class="relative">
-                        ${mediaHtml}
-                        <span class="absolute top-2 right-2 bg-white/90 text-sm p-1 rounded-full shadow">${item.sticker || '🌸'}</span>
+                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 ${badgeBg} px-3 py-0.5 rounded-full text-[10px] font-bold shadow-md border border-white whitespace-nowrap z-20">
+                        ${house.plotNumber} • ${house.status}
                     </div>
-                    <div class="mt-3 flex justify-between items-start gap-2">
-                        <div>
-                            <p class="font-fredoka text-xs text-pink-700 leading-tight">${item.caption || 'Memori Buah'}</p>
-                            <span class="text-[10px] text-pink-400 block mt-1"><i class="fa-regular fa-calendar"></i> ${item.date || 'Hari ini'}</span>
-                        </div>
-                        ${item.id.startsWith('d') ? '' : `
-                            <button onclick="deleteMedia('${item.id}')" class="text-pink-300 hover:text-rose-500 text-xs p-1">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
-                        `}
+                    <div class="w-full">
+                        ${generateHouseSVG(house)}
+                    </div>
+                    <div class="bg-white/95 backdrop-blur px-3 py-1.5 rounded-2xl shadow-lg border border-white/90 text-center -mt-3 z-10 w-full">
+                        <h4 class="font-title text-xs text-slate-800 truncate">${house.title}</h4>
+                        <p class="text-[10px] text-slate-500 font-semibold truncate">👤 ${house.owner}</p>
                     </div>
                 `;
-                grid.appendChild(card);
+                housesLayer.appendChild(card);
             });
+
+            document.getElementById('houseCountBadge').innerText = `${houses.length} Rumah`;
+            updateMiniMap();
         }
 
-        async function deleteMedia(id) {
-            await deleteMediaFromDB(id);
-            renderGalleryGrid();
+        // Panning Map Drag Logic
+        function startDrag(e) {
+            if (e.target.closest('#houseModal') || e.target.closest('#addHouseModal')) return;
+            isDragging = true;
+            startX = e.clientX - panX;
+            startY = e.clientY - panY;
+            document.getElementById('mapContainer').style.cursor = 'grabbing';
         }
 
-        document.getElementById('toggle-upload-btn').addEventListener('click', () => {
-            document.getElementById('upload-card').classList.toggle('hidden');
-        });
+        function drag(e) {
+            if (!isDragging) return;
+            panX = e.clientX - startX;
+            panY = e.clientY - startY;
+            applyTransform();
+        }
 
-        document.getElementById('media-file-input').addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                document.getElementById('file-chosen-text').textContent = this.files[0].name;
+        function stopDrag() {
+            isDragging = false;
+            document.getElementById('mapContainer').style.cursor = 'grab';
+        }
+
+        // Touch Drag for Mobile
+        function startDragTouch(e) {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                startX = e.touches[0].clientX - panX;
+                startY = e.touches[0].clientY - panY;
             }
-        });
+        }
 
-        document.getElementById('upload-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const fileInput = document.getElementById('media-file-input');
-            const captionInput = document.getElementById('media-caption-input');
-            const stickerInput = document.getElementById('media-sticker-input');
+        function dragTouch(e) {
+            if (isDragging && e.touches.length === 1) {
+                panX = e.touches[0].clientX - startX;
+                panY = e.touches[0].clientY - startY;
+                applyTransform();
+            }
+        }
 
-            if (!fileInput.files || !fileInput.files[0]) return;
+        // Apply Transform Zoom & Pan
+        function applyTransform() {
+            const megaMap = document.getElementById('megaMap');
+            megaMap.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
+            updateMiniMap();
+        }
 
-            const file = fileInput.files[0];
-            const reader = new FileReader();
+        function adjustZoom(delta) {
+            currentZoom = Math.min(Math.max(0.35, currentZoom + delta), 1.2);
+            applyTransform();
+        }
 
-            reader.onload = async function(evt) {
-                const isVideo = file.type.startsWith('video/');
-                const newItem = {
-                    id: 'usr_' + Date.now(),
-                    type: isVideo ? 'video' : 'image',
-                    url: evt.target.result,
-                    caption: captionInput.value || (isVideo ? 'Video Buah 🎥' : 'Foto Buah 🍓'),
-                    sticker: stickerInput.value,
-                    date: new Date().toISOString().split('T')[0]
-                };
+        function resetView() {
+            currentZoom = 0.65;
+            panX = -800;
+            panY = -600;
+            applyTransform();
+        }
 
-                await saveMediaToDB(currentHouseId, newItem);
-                fileInput.value = ''; captionInput.value = '';
-                document.getElementById('upload-card').classList.add('hidden');
-                renderGalleryGrid();
+        // Sector Quick Jump Navigation
+        function jumpToSector(sectorCode) {
+            const coordinates = {
+                'A': { x: -200, y: -200 },
+                'B': { x: -1600, y: -200 },
+                'C': { x: -200, y: -1100 },
+                'D': { x: -1600, y: -1100 }
             };
 
-            reader.readAsDataURL(file);
-        });
-
-        function openLightbox(type, url) {
-            const modal = document.getElementById('lightbox-modal');
-            const body = document.getElementById('lightbox-body');
-            body.innerHTML = type === 'video'
-                ? `<video src="${url}" controls autoplay class="max-w-full max-h-[80vh] rounded-2xl"></video>`
-                : `<img src="${url}" class="max-w-full max-h-[80vh] object-contain rounded-2xl border-4 border-pink-300"/>`;
-            modal.classList.remove('hidden');
-        }
-
-        document.getElementById('close-gallery').addEventListener('click', () => {
-            document.getElementById('gallery-modal').classList.add('hidden');
-        });
-        document.getElementById('close-lightbox').addEventListener('click', () => {
-            document.getElementById('lightbox-modal').classList.add('hidden');
-        });
-        document.getElementById('info-btn').addEventListener('click', () => {
-            document.getElementById('info-modal').classList.remove('hidden');
-        });
-        document.querySelectorAll('.close-info').forEach(b => b.addEventListener('click', () => {
-            document.getElementById('info-modal').classList.add('hidden');
-        }));
-
-        // Filter Tabs
-        document.getElementById('tab-all').addEventListener('click', function() { activeFilter = 'all'; updateTabs(this); renderGalleryGrid(); });
-        document.getElementById('tab-photos').addEventListener('click', function() { activeFilter = 'photos'; updateTabs(this); renderGalleryGrid(); });
-        document.getElementById('tab-videos').addEventListener('click', function() { activeFilter = 'videos'; updateTabs(this); renderGalleryGrid(); });
-
-        function updateTabs(btn) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.className = 'tab-btn px-4 py-1.5 rounded-full font-fredoka text-xs bg-white text-pink-600 hover:bg-pink-100');
-            btn.className = 'tab-btn px-4 py-1.5 rounded-full font-fredoka text-xs bg-pink-500 text-white shadow';
-        }
-
-        // BGM Synthesizer
-        let bgmPlaying = false, bgmTimer;
-        document.getElementById('bgm-btn').addEventListener('click', () => {
-            const btnText = document.getElementById('bgm-text');
-            if (!bgmPlaying) {
-                bgmPlaying = true; btnText.textContent = 'Musik: On 🎶';
-                const notes = [261.63, 329.63, 392.00, 523.25, 440.00];
-                let idx = 0;
-                bgmTimer = setInterval(() => {
-                    if (audioCtx.state === 'suspended') audioCtx.resume();
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.frequency.setValueAtTime(notes[idx % notes.length], audioCtx.currentTime);
-                    gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.8);
-                    idx++;
-                }, 600);
-            } else {
-                bgmPlaying = false; btnText.textContent = 'Musik: Off';
-                clearInterval(bgmTimer);
+            if (coordinates[sectorCode]) {
+                panX = coordinates[sectorCode].x;
+                panY = coordinates[sectorCode].y;
+                currentZoom = 0.75;
+                applyTransform();
             }
-        });
+        }
 
-        // RENDER LOOP & RESIZE
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.update();
+        function jumpToCenterPark() {
+            panX = -850;
+            panY = -550;
+            currentZoom = 0.8;
+            applyTransform();
+        }
 
-            // Animate floating icons
-            Object.values(houseMeshes).forEach(group => {
-                const sprite = group.children[group.children.length - 1];
-                if (sprite && sprite.isSprite) {
-                    sprite.position.y = 22 + Math.sin(Date.now() * 0.003 + group.position.x) * 1.2;
-                }
+        // Mini-Map Synchronization
+        function updateMiniMap() {
+            const miniBox = document.getElementById('miniViewportBox');
+            if (!miniBox) return;
+
+            // Mini map scale calculations (3200x2400 to mini-map pixel ratio)
+            const scaleX = 208 / 3200;
+            const scaleY = 144 / 2400;
+
+            const boxW = Math.max(20, (window.innerWidth / currentZoom) * scaleX);
+            const boxH = Math.max(16, (window.innerHeight / currentZoom) * scaleY);
+            const boxX = Math.min(Math.max(0, (-panX) * scaleX), 208 - boxW);
+            const boxY = Math.min(Math.max(0, (-panY) * scaleY), 144 - boxH);
+
+            miniBox.style.width = `${boxW}px`;
+            miniBox.style.height = `${boxH}px`;
+            miniBox.style.left = `${boxX}px`;
+            miniBox.style.top = `${boxY}px`;
+        }
+
+        function navigateMiniMap(e) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            panX = -(clickX / 208 * 3200) + (window.innerWidth / 2);
+            panY = -(clickY / 144 * 2400) + (window.innerHeight / 2);
+            applyTransform();
+        }
+
+        // Filter Houses Search Logic
+        function filterHouses() {
+            const searchVal = document.getElementById('searchInput').value.toLowerCase();
+            const sectorVal = document.getElementById('sectorFilter').value;
+            const statusVal = document.getElementById('statusFilter').value;
+
+            const filtered = houses.filter(h => {
+                const matchesSearch = h.title.toLowerCase().includes(searchVal) || 
+                                      h.owner.toLowerCase().includes(searchVal) || 
+                                      h.plotNumber.toLowerCase().includes(searchVal);
+                const matchesSector = (sectorVal === 'all') || (h.sector === sectorVal);
+                const matchesStatus = (statusVal === 'all') || (h.status === statusVal);
+                return matchesSearch && matchesSector && matchesStatus;
             });
 
-            renderer.render(scene, camera);
+            renderHouses(filtered);
         }
 
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        // Day / Night Toggle Mode
+        function toggleDayNight() {
+            isNight = !isNight;
+            const viewport = document.getElementById('mapViewport');
+            const celestial = document.getElementById('celestialBody');
+            const btnText = document.getElementById('dayNightText');
+            const btnIcon = document.getElementById('dayNightIcon');
 
-        initDB();
-        animate();
+            if (isNight) {
+                document.body.classList.add('night-mode');
+                viewport.classList.remove('sky-day');
+                viewport.classList.add('sky-night');
+
+                celestial.innerHTML = '<div class="text-3xl">🌙</div>';
+                celestial.className = 'absolute top-24 right-16 w-24 h-24 rounded-full bg-slate-100 shadow-[0_0_60px_rgba(255,255,255,0.8)] border-4 border-slate-200 pointer-events-none z-10 flex items-center justify-center transition-all duration-700';
+
+                btnText.innerText = 'Malam';
+                btnIcon.className = 'fa-solid fa-moon text-indigo-200';
+            } else {
+                document.body.classList.remove('night-mode');
+                viewport.classList.remove('sky-night');
+                viewport.classList.add('sky-day');
+
+                celestial.innerHTML = '<div class="text-3xl opacity-40">☀️</div>';
+                celestial.className = 'absolute top-24 right-16 w-24 h-24 rounded-full bg-yellow-300 shadow-[0_0_60px_rgba(253,224,71,0.9)] border-4 border-yellow-200 pointer-events-none z-10 flex items-center justify-center transition-all duration-700';
+
+                btnText.innerText = 'Siang';
+                btnIcon.className = 'fa-solid fa-sun text-yellow-100';
+            }
+
+            renderHouses();
+        }
+
+        // Modal House Detail Controls
+        function openModal(houseId) {
+            selectedHouseId = houseId;
+            const house = houses.find(h => h.id === houseId);
+            if (!house) return;
+
+            document.getElementById('modalHouseGraphic').innerHTML = generateHouseSVG(house);
+            document.getElementById('modalPlotBadge').innerText = house.plotNumber;
+            document.getElementById('modalSectorBadge').innerText = `${house.sector === 'A' ? '🍋 Sektor A' : house.sector === 'B' ? '🍓 Sektor B' : house.sector === 'C' ? '🍍 Sektor C' : '🍇 Sektor D'}`;
+            document.getElementById('modalStatusBadge').innerText = house.status;
+            document.getElementById('modalHouseTitle').innerText = house.title;
+            document.getElementById('modalAddress').innerText = `📍 ${house.address}`;
+            document.getElementById('modalOwner').innerText = house.owner;
+            document.getElementById('modalAvatar').innerText = house.avatar;
+            document.getElementById('modalDescription').innerText = house.description;
+
+            updateLightBtnText(house.lightOn);
+
+            const modal = document.getElementById('houseModal');
+            const card = document.getElementById('modalCard');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                card.classList.remove('scale-90');
+                card.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('houseModal');
+            const card = document.getElementById('modalCard');
+            modal.classList.add('opacity-0');
+            card.classList.remove('scale-100');
+            card.classList.add('scale-90');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function toggleHouseLight() {
+            const house = houses.find(h => h.id === selectedHouseId);
+            if (house) {
+                house.lightOn = !house.lightOn;
+                document.getElementById('modalHouseGraphic').innerHTML = generateHouseSVG(house);
+                updateLightBtnText(house.lightOn);
+                renderHouses();
+            }
+        }
+
+        function updateLightBtnText(isLit) {
+            const btn = document.getElementById('toggleLightBtn');
+            if (isLit) {
+                btn.innerHTML = `<i class="fa-solid fa-lightbulb text-yellow-300"></i> Matikan Lampu`;
+                btn.className = "py-2.5 px-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-xs md:text-sm shadow flex items-center justify-center gap-2 transition-transform active:scale-95";
+            } else {
+                btn.innerHTML = `<i class="fa-regular fa-lightbulb"></i> Nyalakan Lampu`;
+                btn.className = "py-2.5 px-3 bg-slate-600 hover:bg-slate-700 text-white rounded-xl font-bold text-xs md:text-sm shadow flex items-center justify-center gap-2 transition-transform active:scale-95";
+            }
+        }
+
+        function ringDoorbell() {
+            playDoorbellSound();
+            const btn = document.getElementById('ringBellBtn');
+            btn.classList.add('animate-bounce');
+            setTimeout(() => btn.classList.remove('animate-bounce'), 1000);
+        }
+
+        function sendGuestNote() {
+            const input = document.getElementById('guestNoteInput');
+            const alert = document.getElementById('guestNoteAlert');
+            if (input.value.trim() !== '') {
+                alert.classList.remove('hidden');
+                input.value = '';
+                setTimeout(() => alert.classList.add('hidden'), 3000);
+            }
+        }
+
+        // Add House Form Modal
+        function openAddHouseModal() {
+            const modal = document.getElementById('addHouseModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+
+        function closeAddHouseModal() {
+            const modal = document.getElementById('addHouseModal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function handleAddHouse(e) {
+            e.preventDefault();
+            const plot = document.getElementById('newHousePlot').value.toUpperCase();
+            const sector = document.getElementById('newHouseSector').value;
+            const title = document.getElementById('newHouseTitle').value;
+            const owner = document.getElementById('newHouseOwner').value;
+            const theme = document.getElementById('newHouseTheme').value;
+            const status = document.getElementById('newHouseStatus').value;
+            const desc = document.getElementById('newHouseDesc').value;
+
+            const avatarMap = {
+                lemon: '🍋',
+                strawberry: '🍓',
+                orange: '🍊',
+                blueberry: '🫐',
+                pineapple: '🍍',
+                watermelon: '🍉',
+                grape: '🍇',
+                apple: '🍎'
+            };
+
+            const sectorCoordinates = {
+                'A': { x: 100 + (houses.length * 40) % 800, y: 900 },
+                'B': { x: 2200 + (houses.length * 40) % 800, y: 900 },
+                'C': { x: 100 + (houses.length * 40) % 800, y: 1850 },
+                'D': { x: 2200 + (houses.length * 40) % 800, y: 1850 }
+            };
+
+            const pos = sectorCoordinates[sector] || { x: 1400, y: 1850 };
+
+            const newHouse = {
+                id: 'custom-' + Date.now(),
+                sector: sector,
+                plotNumber: plot,
+                x: pos.x,
+                y: pos.y,
+                title: title,
+                owner: owner,
+                theme: theme,
+                status: status,
+                address: `Jalan Utama Sektor ${sector} No. ${houses.length + 1}`,
+                avatar: avatarMap[theme] || '🏡',
+                description: desc || 'Kavling rumah buah baru yang megah di Berry Bitty City.',
+                lightOn: true,
+                svgType: theme
+            };
+
+            houses.push(newHouse);
+            renderHouses();
+            closeAddHouseModal();
+            e.target.reset();
+        }
+
+        function triggerFountainSplashes() {
+            playDoorbellSound();
+        }
+
+        // Initialize Window OnLoad
+        window.onload = function() {
+            renderHouses();
+            applyTransform();
+
+            // Enable Mouse Wheel Zooming
+            document.getElementById('mapViewport').addEventListener('wheel', function(e) {
+                e.preventDefault();
+                const delta = e.deltaY < 0 ? 0.08 : -0.08;
+                adjustZoom(delta);
+            }, { passive: false });
+        };
     </script>
 </body>
 </html>
